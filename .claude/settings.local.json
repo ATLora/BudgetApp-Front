@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(printf \"y\\\\n\")",
+      "Bash(mv budget-app-temp/* .)",
+      "Bash(mv budget-app-temp/.gitignore .)",
+      "Bash(mv budget-app-temp/.* .)",
+      "Bash(rmdir budget-app-temp:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(./node_modules/.bin/tailwindcss init:*)",
+      "Bash(npx shadcn@latest init --defaults)"
+    ]
+  }
+}
