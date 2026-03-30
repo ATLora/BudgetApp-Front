@@ -2044,3 +2044,117 @@ Requires a valid Bearer token. All three database queries filter by `UserId == _
 ### Notes
 
 The handler uses three separate DB round-trips by design: the first uses a lightweight projection (no `Include`) to compute status counts without loading contribution data; the second loads only active goals with contributions for snapshot computation; the third is a server-side `SumAsync` to avoid pulling all contributions into memory for the monthly total. `OverdueGoalCount` is derived from the status-projection query (overdue = active + TargetDate in the past) and may differ from `ActiveGoalCount` — a goal can be both active and overdue simultaneously. `RequiredMonthlyAmount` uses 30.44 days/month as the average month length to avoid introducing a dependency on exact calendar calculations.
+
+---
+
+## Budget — IsRecurring Field
+
+**Date Added:** 2026-03-29
+**Entity:** Budget
+**Type:** Command + Query (cross-cutting field change)
+**HTTP Endpoint:** Propagated through `POST /api/v1/budgets`, `PUT /api/v1/budgets/{id}`, `GET /api/v1/budgets`, `GET /api/v1/budgets/{id}`
+
+### Description
+Adds a boolean `IsRecurring` property to the `Budget` entity, indicating whether a budget is intended to repeat on a regular cadence. The field defaults to `false` in the database (via EF migration) so all existing budgets remain non-recurring without data migration. It is exposed in both the list (`BudgetSummaryDto`) and detail (`BudgetDetailDto`) response shapes, and is accepted as an input on both create and update operations. This field is the prerequisite gate for the `RollForwardBudget` command — only budgets with `IsRecurring == true` may be rolled forward to the next period.
+
+### Workflow
+
+**Create path:**
+1. Client sends `POST /api/v1/budgets` with a request body that includes `"isRecurring": true|false`
+2. `BudgetsController.Create` maps the field from `CreateBudgetRequest` into `CreateBudgetCommand`
+3. `CreateBudgetCommandValidator` validates the command (existing date/amount rules — no specific rule on `IsRecurring`)
+4. `CreateBudgetCommandHandler` sets `budget.IsRecurring = request.IsRecurring` before `_context.SaveChangesAsync(ct)`
+5. Returns the new budget `Guid` — HTTP 201 Created
+
+**Update path:**
+1. Client sends `PUT /api/v1/budgets/{id}` with a request body that includes `"isRecurring": true|false`
+2. `BudgetsController.Update` maps the field from `UpdateBudgetRequest` into `UpdateBudgetCommand`
+3. `UpdateBudgetCommandValidator` validates the command
+4. `UpdateBudgetCommandHandler` sets `budget.IsRecurring = request.IsRecurring` then calls `_context.SaveChangesAsync(ct)`
+5. Returns HTTP 204 No Content
+
+**Read path:**
+- `GetBudgetsQueryHandler` projects `IsRecurring` into `BudgetSummaryDto` — returned in `GET /api/v1/budgets`
+- `GetBudgetByIdQueryHandler` projects `IsRecurring` into `BudgetDetailDto` — returned in `GET /api/v1/budgets/{id}`
+
+### Components
+| File | Layer | Role |
+|------|-------|------|
+| `src/BudgetApp.Domain/Entities/Budget.cs` | Domain | Adds `bool IsRecurring` property to the `Budget` entity |
+| `src/BudgetApp.Infrastructure/Persistence/Migrations/20260330012816_AddBudgetIsRecurring.cs` | Infrastructure | EF migration — adds `IsRecurring boolean NOT NULL DEFAULT false` column to `Budgets` table |
+| `src/BudgetApp.Application/Features/Budgets/Commands/CreateBudget/CreateBudgetCommand.cs` | Application | Adds `bool IsRecurring` parameter to the command record |
+| `src/BudgetApp.Application/Features/Budgets/Commands/CreateBudget/CreateBudgetCommandHandler.cs` | Application | Sets `budget.IsRecurring = request.IsRecurring` during budget creation |
+| `src/BudgetApp.Application/Features/Budgets/Commands/UpdateBudget/UpdateBudgetCommand.cs` | Application | Adds `bool IsRecurring` parameter to the command record |
+| `src/BudgetApp.Application/Features/Budgets/Commands/UpdateBudget/UpdateBudgetCommandHandler.cs` | Application | Sets `budget.IsRecurring = request.IsRecurring` during budget update |
+| `src/BudgetApp.Application/Features/Budgets/Queries/GetBudgets/BudgetSummaryDto.cs` | Application | Exposes `bool IsRecurring` in the list-view response shape |
+| `src/BudgetApp.Application/Features/Budgets/Queries/GetBudgetById/BudgetDetailDto.cs` | Application | Exposes `bool IsRecurring` in the detail-view response shape |
+| `src/BudgetApp.API/Controllers/BudgetsController.cs` | API | `CreateBudgetRequest` and `UpdateBudgetRequest` both include `bool IsRecurring`; controller maps the field into respective commands |
+
+### Authorization
+No dedicated authorization logic specific to this field. Ownership enforcement follows the existing Budget pattern: `CreateBudgetCommandHandler` and `UpdateBudgetCommandHandler` each resolve `_currentUser.UserId` and throw `ForbiddenException` if unauthenticated. `UpdateBudgetCommandHandler` additionally filters the DB query by `UserId` before applying any field mutation.
+
+### Error Responses
+| Scenario | Exception Thrown | HTTP Status |
+|----------|-----------------|-------------|
+| Unauthenticated user on create or update | `ForbiddenException` | 403 |
+| Budget not found on update | `NotFoundException` | 404 |
+| Validation failure on create or update | `ValidationException` | 422 |
+
+### Notes
+The column is added with `DEFAULT false`, meaning all budgets that existed before the migration have `IsRecurring = false` automatically and require no back-fill. The field carries no validation rule of its own — it is a plain boolean with no constraints beyond the EF column definition. Its primary purpose is to act as an eligibility gate for the `RollForwardBudget` command documented below.
+
+---
+
+## Budget — Roll Forward
+
+**Date Added:** 2026-03-29
+**Entity:** Budget
+**Type:** Command
+**HTTP Endpoint:** `POST /api/v1/budgets/{id}/roll-forward`
+
+### Description
+Creates the next period's budget by cloning an existing recurring budget one full period into the future. The source budget is never modified; a new `Budget` row is inserted with dates advanced according to the budget's `BudgetType`, with all `BudgetCategories` (including planned amounts and notes) copied over. Transactions are not carried across — they belong to their original period. This feature supports the periodic budget workflow where users want to start the next month, week, or quarter with the same structure as the previous one without manual re-entry.
+
+### Workflow
+1. Client sends `POST /api/v1/budgets/{id}/roll-forward` (no request body; `id` is the source budget's `Guid`)
+2. `BudgetsController.RollForward` dispatches `RollForwardBudgetCommand(id)` via MediatR
+3. No validator is registered for this command — the single `Guid` input is sufficient; route constraint `{id:guid}` handles malformed identifiers
+4. `RollForwardBudgetCommandHandler` handles the request:
+   - Resolves `userId` from `_currentUser.UserId` — throws `ForbiddenException("User is not authenticated.")` if null
+   - Loads the source budget with `.Include(b => b.BudgetCategories)` filtered by `Id == request.BudgetId && UserId == userId` — throws `NotFoundException(nameof(Budget), request.BudgetId)` if not found or not owned
+   - Guards `source.IsRecurring == false` — throws `DomainException("Only recurring budgets can be rolled forward.")`
+   - Calls `AdvancePeriod(source)` to compute `(newStart, newEnd)` based on `BudgetType`:
+     - `Monthly` — StartDate +1 month, EndDate +1 month
+     - `Weekly` — +7 days each
+     - `Biweekly` — +14 days each
+     - `Quarterly` — +3 months each
+     - `Annual` — +1 year each
+     - `Custom` — span in days preserved exactly (`spanDays = EndDate.DayNumber - StartDate.DayNumber + 1`); both dates shifted by `spanDays`
+   - Runs an overlap check via `AnyAsync` where `UserId == userId && Id != sourceId && StartDate <= newEnd && EndDate >= newStart` — throws `DomainException` with the conflicting date range message if any existing budget overlaps
+   - Constructs a new `Budget` cloning: `Name`, `BudgetType`, `IsRecurring`, `TotalIncomePlanned`, `TotalExpensesPlanned`, `TotalSavingsPlanned`, and each `BudgetCategory` (`CategoryId`, `PlannedAmount`, `Notes`)
+   - Adds the new budget via `_context.Budgets.Add(next)` and persists with `_context.SaveChangesAsync(ct)`
+5. Returns the new budget's `Guid` — HTTP 201 Created with `Location` header pointing to `GET /api/v1/budgets/{newId}`
+
+### Components
+| File | Layer | Role |
+|------|-------|------|
+| `src/BudgetApp.Application/Features/Budgets/Commands/RollForwardBudget/RollForwardBudgetCommand.cs` | Application | MediatR request record — `record RollForwardBudgetCommand(Guid BudgetId) : IRequest<Guid>` |
+| `src/BudgetApp.Application/Features/Budgets/Commands/RollForwardBudget/RollForwardBudgetCommandHandler.cs` | Application | Business logic — period advancement, overlap guard, budget cloning, persistence |
+| `src/BudgetApp.API/Controllers/BudgetsController.cs` | API | `POST {id:guid}/roll-forward` action — dispatches command and returns 201 with Location header |
+| `src/BudgetApp.Domain/Entities/Budget.cs` | Domain | Source and target entity; `IsRecurring` and `BudgetCategories` navigation property are consumed by the handler |
+
+### Authorization
+The handler immediately resolves `_currentUser.UserId` and throws `ForbiddenException` if the claim is absent (unauthenticated request that bypassed the `[Authorize]` attribute). Ownership of the source budget is enforced inside the EF query predicate (`b.UserId == userId`), so a request targeting another user's budget surfaces as `NotFoundException` rather than `ForbiddenException` — consistent with the "don't confirm existence of other users' resources" pattern used across all Budget handlers. The overlap check also filters by `UserId`, ensuring only the current user's budgets are considered in the conflict detection.
+
+### Error Responses
+| Scenario | Exception Thrown | HTTP Status |
+|----------|-----------------|-------------|
+| Unauthenticated (no valid JWT) | `ForbiddenException` | 403 |
+| Source budget not found or belongs to another user | `NotFoundException` | 404 |
+| Source budget has `IsRecurring == false` | `DomainException` | 400 |
+| New period overlaps an existing budget for this user | `DomainException` | 400 |
+| Unsupported `BudgetType` value in `AdvancePeriod` | `DomainException` | 400 |
+
+### Notes
+No validator class exists for this command by design — with a single `Guid` route parameter, FluentValidation would add no meaningful safety beyond the route constraint already enforced by ASP.NET Core (`{id:guid}`). The overlap check uses the standard date-intersection predicate (`StartDate <= newEnd && EndDate >= newStart`), which correctly identifies all overlap cases including partial overlaps, containment, and exact boundary matches. `BudgetCategories` are cloned as new entity instances with no `Id` set so EF generates fresh keys; the source `BudgetCategory.Id` values are intentionally not copied, preventing EF identity conflicts. Transactions are not cloned because they represent actuals for the source period and would corrupt the new period's reporting from day one.
+
