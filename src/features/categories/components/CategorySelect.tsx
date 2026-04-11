@@ -35,8 +35,10 @@ export function CategorySelect({
   disabled = false,
   placeholder = 'Select a category',
 }: CategorySelectProps) {
-  const { data: allCategories = [], isLoading } = useQuery({
+  const { data: allCategories = [], isLoading, isError } = useQuery({
     queryKey: ['categories', 'list'],
+    // Always fetch without params so all consumers share the ['categories', 'list']
+    // cache entry. Client-side filtering keeps cache coherent.
     queryFn: () => categoriesApi.list(),
     staleTime: 10 * 60 * 1000,
   });
@@ -62,8 +64,12 @@ export function CategorySelect({
       onValueChange={handleChange}
       disabled={disabled || isLoading}
     >
-      <SelectTrigger className="w-full" aria-label="Select category">
-        <SelectValue placeholder={isLoading ? 'Loading…' : placeholder} />
+      <SelectTrigger className="w-full" aria-label="Select category" aria-invalid={isError || undefined}>
+        <SelectValue
+          placeholder={
+            isLoading ? 'Loading…' : isError ? 'Failed to load categories' : placeholder
+          }
+        />
       </SelectTrigger>
       <SelectContent>
         {available.map((cat) => (
@@ -71,7 +77,7 @@ export function CategorySelect({
             {cat.name}
           </SelectItem>
         ))}
-        <SelectSeparator />
+        {available.length > 0 && <SelectSeparator />}
         <SelectItem value="__create_new__">+ Create new category</SelectItem>
       </SelectContent>
     </Select>
