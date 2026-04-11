@@ -190,9 +190,6 @@ export interface CreateBudgetRequest {
   startDate: string;
   endDate: string;
   budgetType: BudgetType;
-  totalIncomePlanned: number;
-  totalExpensesPlanned: number;
-  totalSavingsPlanned: number;
   isRecurring: boolean;
 }
 
@@ -201,9 +198,6 @@ export interface UpdateBudgetRequest {
   startDate: string;
   endDate: string;
   budgetType: BudgetType;
-  totalIncomePlanned: number;
-  totalExpensesPlanned: number;
-  totalSavingsPlanned: number;
   isRecurring: boolean;
 }
 
