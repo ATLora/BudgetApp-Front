@@ -40,7 +40,7 @@ const TYPE_TO_CAT_TYPE: Record<string, CategoryType> = {
 };
 
 const transactionSchema = z.object({
-  budgetId: z.string().min(1, 'Select a budget'),
+  budgetId: z.string(),
   categoryId: z.string().min(1, 'Select a category'),
   transactionType: z.enum(
     ['Income', 'Expense', 'SavingsDeposit', 'SavingsWithdrawal'] as const,
@@ -143,6 +143,11 @@ export function TransactionFormDialog({
 
     if (isEdit && !transactionId) {
       setServerError('Transaction ID is required in edit mode.');
+      return;
+    }
+
+    if (!isEdit && !data.budgetId) {
+      form.setError('budgetId', { message: 'Select a budget' });
       return;
     }
 

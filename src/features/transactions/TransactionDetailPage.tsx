@@ -230,7 +230,6 @@ export function TransactionDetailPage() {
         mode="edit"
         transactionId={id}
         defaultValues={editDefaultValues}
-        onSuccess={() => detailQuery.refetch()}
       />
     </div>
   );
