@@ -58,6 +58,7 @@ export function BudgetListPage() {
     setEditTarget(budget);
     setFormMode('edit');
     setFormError(null);
+    setPendingCategories([]);
     setFormOpen(true);
   }
 

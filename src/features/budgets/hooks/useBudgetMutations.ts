@@ -3,17 +3,6 @@ import { budgetsApi } from '@/services/api/budgets';
 import type { CreateBudgetRequest, UpdateBudgetRequest } from '@/types/api';
 import type { PendingBudgetCategory } from '../types';
 
-export function useCreateBudget() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: CreateBudgetRequest) => budgetsApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets', 'list'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    },
-  });
-}
-
 export function useUpdateBudget() {
   const queryClient = useQueryClient();
   return useMutation({
