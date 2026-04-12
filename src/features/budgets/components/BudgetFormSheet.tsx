@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+// src/features/budgets/components/BudgetFormSheet.tsx
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BudgetType } from '@/types/api';
+import { BudgetCategoryBuilder } from './BudgetCategoryBuilder';
+import type { PendingBudgetCategory } from '../types';
 
 const budgetSchema = z
   .object({
@@ -27,9 +30,6 @@ const budgetSchema = z
     budgetType: z.enum(['Monthly', 'Weekly', 'Biweekly', 'Quarterly', 'Annual', 'Custom'] as const),
     startDate: z.string().min(1, 'Start date is required'),
     endDate: z.string().min(1, 'End date is required'),
-    totalIncomePlanned: z.number({ invalid_type_error: 'Enter a number' }).min(0),
-    totalExpensesPlanned: z.number({ invalid_type_error: 'Enter a number' }).min(0),
-    totalSavingsPlanned: z.number({ invalid_type_error: 'Enter a number' }).min(0),
     isRecurring: z.boolean(),
   })
   .refine((d) => !d.startDate || !d.endDate || d.endDate > d.startDate, {
@@ -58,9 +58,6 @@ const DEFAULT_VALUES: BudgetFormData = {
   budgetType: BudgetType.Monthly,
   startDate: defaultStartDate(),
   endDate: defaultEndDate(),
-  totalIncomePlanned: 0,
-  totalExpensesPlanned: 0,
-  totalSavingsPlanned: 0,
   isRecurring: true,
 };
 
@@ -73,6 +70,10 @@ interface BudgetFormSheetProps {
   onSubmit: (data: BudgetFormData) => void;
   isSubmitting: boolean;
   serverError?: string | null;
+  /** 'create' shows the category builder; 'edit' hides it. Defaults to 'edit'. */
+  mode?: 'create' | 'edit';
+  /** Called whenever the pending categories change (create mode only). */
+  onCategoriesChange?: (cats: PendingBudgetCategory[]) => void;
 }
 
 export function BudgetFormSheet({
@@ -84,6 +85,8 @@ export function BudgetFormSheet({
   onSubmit,
   isSubmitting,
   serverError,
+  mode = 'edit',
+  onCategoriesChange,
 }: BudgetFormSheetProps) {
   const {
     register,
@@ -96,11 +99,16 @@ export function BudgetFormSheet({
     defaultValues: { ...DEFAULT_VALUES, ...defaultValues },
   });
 
+  // Incrementing this key forces BudgetCategoryBuilder to remount (and reset)
+  // each time the sheet opens in create mode.
+  const [builderKey, setBuilderKey] = useState(0);
+
   useEffect(() => {
     if (open) {
       reset({ ...DEFAULT_VALUES, ...defaultValues });
+      if (mode === 'create') setBuilderKey((k) => k + 1);
     }
-  }, [open, defaultValues, reset]);
+  }, [open, defaultValues, reset, mode]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -183,52 +191,6 @@ export function BudgetFormSheet({
               </div>
             </div>
 
-            {/* Planned amounts */}
-            <div className="space-y-1.5">
-              <Label htmlFor="income-planned">Income Planned</Label>
-              <Input
-                id="income-planned"
-                type="number"
-                min="0"
-                step="0.01"
-                aria-invalid={!!errors.totalIncomePlanned}
-                {...register('totalIncomePlanned', { valueAsNumber: true })}
-              />
-              {errors.totalIncomePlanned && (
-                <p className="text-xs text-destructive">{errors.totalIncomePlanned.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="expenses-planned">Expenses Planned</Label>
-              <Input
-                id="expenses-planned"
-                type="number"
-                min="0"
-                step="0.01"
-                aria-invalid={!!errors.totalExpensesPlanned}
-                {...register('totalExpensesPlanned', { valueAsNumber: true })}
-              />
-              {errors.totalExpensesPlanned && (
-                <p className="text-xs text-destructive">{errors.totalExpensesPlanned.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="savings-planned">Savings Planned</Label>
-              <Input
-                id="savings-planned"
-                type="number"
-                min="0"
-                step="0.01"
-                aria-invalid={!!errors.totalSavingsPlanned}
-                {...register('totalSavingsPlanned', { valueAsNumber: true })}
-              />
-              {errors.totalSavingsPlanned && (
-                <p className="text-xs text-destructive">{errors.totalSavingsPlanned.message}</p>
-              )}
-            </div>
-
             {/* Recurring toggle */}
             <div className="flex items-center justify-between rounded-lg border px-4 py-3">
               <div>
@@ -244,6 +206,16 @@ export function BudgetFormSheet({
                 {...register('isRecurring')}
               />
             </div>
+
+            {/* Category builder — create mode only */}
+            {mode === 'create' && (
+              <div className="border-t pt-4">
+                <BudgetCategoryBuilder
+                  key={builderKey}
+                  onChange={onCategoriesChange ?? (() => {})}
+                />
+              </div>
+            )}
 
             {serverError && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
