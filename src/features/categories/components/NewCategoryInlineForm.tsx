@@ -80,7 +80,7 @@ export function NewCategoryInlineForm({ onCreated, onCancel }: NewCategoryInline
 
       <div className="space-y-1.5">
         <Label className="text-xs">Type</Label>
-        <Select value={categoryType} onValueChange={setCategoryType}>
+        <Select value={categoryType} onValueChange={(val) => { if (val !== null) setCategoryType(val); }}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select type" />
           </SelectTrigger>

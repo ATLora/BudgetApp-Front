@@ -49,7 +49,8 @@ export function CategorySelect({
       !excludeIds.includes(c.id),
   );
 
-  function handleChange(val: string) {
+  function handleChange(val: string | null) {
+    if (!val) return;
     if (val === '__create_new__') {
       onCreateRequest();
       return; // do NOT update value — leave the select at its current display

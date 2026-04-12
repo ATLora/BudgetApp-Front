@@ -121,9 +121,6 @@ export function BudgetDetailPage() {
     budgetType: budget.budgetType,
     startDate: budget.startDate,
     endDate: budget.endDate,
-    totalIncomePlanned: budget.totalIncomePlanned,
-    totalExpensesPlanned: budget.totalExpensesPlanned,
-    totalSavingsPlanned: budget.totalSavingsPlanned,
     isRecurring: budget.isRecurring,
   };
 
