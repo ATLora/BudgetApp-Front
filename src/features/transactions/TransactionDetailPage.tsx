@@ -39,7 +39,7 @@ export function TransactionDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const detailQuery = useTransactionDetail(id!);
+  const detailQuery = useTransactionDetail(id ?? '');
   const deleteMutation = useDeleteTransaction();
   const transaction = detailQuery.data;
 
