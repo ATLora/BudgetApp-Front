@@ -42,7 +42,13 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
       role="button"
       tabIndex={0}
       onClick={handleClick}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      aria-label={`View transaction: ${transaction.description}`}
       className="flex cursor-pointer items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
     >
       <div className="flex items-center gap-3 min-w-0">
