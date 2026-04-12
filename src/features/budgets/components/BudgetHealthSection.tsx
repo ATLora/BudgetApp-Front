@@ -1,8 +1,7 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Progress as ProgressRoot } from '@base-ui/react/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
+import { Progress as ProgressRoot, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatPercent, formatVariance } from '@/lib/formatters';
 import type { BudgetHealthDto } from '@/types/api';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, RotateCcw, AlertCircle } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,11 +63,9 @@ export function BudgetCard({
           {/* Stop card click propagation for the menu */}
           <div onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Budget actions</span>
-                </Button>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Budget actions</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(budget)}>
@@ -137,7 +135,7 @@ export function BudgetCard({
           <div onClick={(e) => e.stopPropagation()}>
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
+                <TooltipTrigger render={<span className="inline-block w-full" />}>
                   <span className="inline-block w-full">
                     <Button
                       size="sm"

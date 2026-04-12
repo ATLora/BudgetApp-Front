@@ -25,12 +25,12 @@ import type { BudgetCategoryDto } from '@/types/api';
 
 const addSchema = z.object({
   categoryId: z.string().min(1, 'Select a category'),
-  plannedAmount: z.number({ invalid_type_error: 'Enter a number' }).min(0),
+  plannedAmount: z.number({ error: 'Enter a number' }).min(0),
   notes: z.string().optional(),
 });
 
 const editSchema = z.object({
-  plannedAmount: z.number({ invalid_type_error: 'Enter a number' }).min(0),
+  plannedAmount: z.number({ error: 'Enter a number' }).min(0),
   notes: z.string().optional(),
 });
 

@@ -55,7 +55,7 @@ export function SpendingByCategoryChart({ categories, totalExpenses }: SpendingB
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), 'Amount']}
+                  formatter={(value) => [formatCurrency(typeof value === 'number' ? value : 0), 'Amount']}
                 />
               </PieChart>
             </ResponsiveContainer>
