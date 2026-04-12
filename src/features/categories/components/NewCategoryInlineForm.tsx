@@ -48,6 +48,7 @@ export function NewCategoryInlineForm({ onCreated, onCancel }: NewCategoryInline
       onCreated(created);
     } catch {
       setError('Failed to create category. Try again.');
+    } finally {
       setIsSubmitting(false);
     }
   }
