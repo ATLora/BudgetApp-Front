@@ -101,7 +101,7 @@ export function TransactionFormDialog({
   useEffect(() => {
     if (open) {
       setServerError(null);
-      form.reset({ ...EMPTY_DEFAULTS, ...defaultValues });
+      form.reset({ ...EMPTY_DEFAULTS, transactionDate: todayISO(), ...defaultValues });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -140,6 +140,11 @@ export function TransactionFormDialog({
 
   function handleSubmit(data: TransactionFormData) {
     setServerError(null);
+
+    if (isEdit && !transactionId) {
+      setServerError('Transaction ID is required in edit mode.');
+      return;
+    }
 
     const onError = (err: unknown) => {
       setServerError(
