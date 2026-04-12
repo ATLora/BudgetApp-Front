@@ -19,14 +19,14 @@ export function useCreateTransaction() {
 export function useUpdateTransaction() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTransactionRequest }) =>
+    mutationFn: ({ id, data, budgetId: _budgetId }: { id: string; budgetId: string; data: UpdateTransactionRequest }) =>
       transactionsApi.update(id, data),
-    onSuccess: (_result, { id }) => {
+    onSuccess: (_result, { id, budgetId }) => {
       queryClient.invalidateQueries({ queryKey: ['transactions', 'list'] });
       queryClient.invalidateQueries({ queryKey: ['transactions', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['transactions', 'detail', id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['budgets', 'detail'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets', 'detail', budgetId] });
     },
   });
 }
@@ -34,12 +34,12 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => transactionsApi.delete(id),
-    onSuccess: () => {
+    mutationFn: ({ id }: { id: string; budgetId: string }) => transactionsApi.delete(id),
+    onSuccess: (_result, { budgetId }) => {
       queryClient.invalidateQueries({ queryKey: ['transactions', 'list'] });
       queryClient.invalidateQueries({ queryKey: ['transactions', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['budgets', 'detail'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets', 'detail', budgetId] });
     },
   });
 }
