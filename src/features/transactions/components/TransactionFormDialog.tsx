@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/select';
 import { categoriesApi } from '@/services/api/categories';
 import { useBudgetList } from '@/features/budgets/hooks/useBudgetList';
+import { useSavingsGoalList } from '@/features/savings/hooks/useSavingsGoalList';
+import { savingsApi } from '@/services/api/savings';
 import { TransactionType } from '@/types/api';
 import type { CategoryType } from '@/types/api';
 import {
@@ -51,6 +53,7 @@ const transactionSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   transactionDate: z.string().min(1, 'Date is required'),
   notes: z.string().optional().nullable(),
+  savingsGoalId: z.string().optional().nullable(),
 });
 
 export type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -67,6 +70,7 @@ const EMPTY_DEFAULTS: TransactionFormData = {
   description: '',
   transactionDate: todayISO(),
   notes: '',
+  savingsGoalId: '',
 };
 
 export interface TransactionFormDialogProps {
@@ -111,6 +115,13 @@ export function TransactionFormDialog({
 
   const budgetsQuery = useBudgetList();
   const budgets = budgetsQuery.data ?? [];
+
+  const savingsGoalsQuery = useSavingsGoalList();
+  const activeSavingsGoals = (savingsGoalsQuery.data ?? []).filter(
+    (g) => g.status === 'Active',
+  );
+  const isSavingsType =
+    watchedType === 'SavingsDeposit' || watchedType === 'SavingsWithdrawal';
 
   // Declare categoriesQuery BEFORE the useEffect that references it
   const categoriesQuery = useQuery({
@@ -159,6 +170,8 @@ export function TransactionFormDialog({
       );
     };
 
+    const selectedGoalId = data.savingsGoalId || null;
+
     if (isEdit && transactionId) {
       updateMutation.mutate(
         {
@@ -193,7 +206,24 @@ export function TransactionFormDialog({
           notes: data.notes ?? null,
         },
         {
-          onSuccess: () => {
+          onSuccess: async (newTransactionId) => {
+            // Step 2: if a savings goal was selected, create the contribution
+            if (selectedGoalId && newTransactionId) {
+              try {
+                await savingsApi.addContribution(selectedGoalId, {
+                  amount: data.amount,
+                  contributionDate: data.transactionDate,
+                  notes: data.notes ?? null,
+                  budgetId: data.budgetId || null,
+                  transactionId: newTransactionId,
+                });
+              } catch {
+                setServerError(
+                  'Transaction created, but failed to link to savings goal. You can add the contribution manually.',
+                );
+                return;
+              }
+            }
             onSuccess?.();
             onOpenChange(false);
           },
@@ -377,6 +407,40 @@ export function TransactionFormDialog({
               {...form.register('notes')}
             />
           </div>
+
+          {/* Savings Goal (savings transaction types only, create mode only) */}
+          {!isEdit && isSavingsType && (
+            <div className="space-y-1.5">
+              <Label>Link to Savings Goal (optional)</Label>
+              <Controller
+                control={form.control}
+                name="savingsGoalId"
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={(v) => field.onChange(v === '__none__' ? '' : v)}
+                    disabled={savingsGoalsQuery.isLoading}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          savingsGoalsQuery.isLoading ? 'Loading…' : 'None'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {activeSavingsGoals.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
 
           {serverError && (
             <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
