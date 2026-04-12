@@ -1,3 +1,4 @@
+// src/features/budgets/BudgetListPage.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutDashboard } from 'lucide-react';
@@ -14,7 +15,7 @@ import { BudgetType } from '@/types/api';
 import type { BudgetSummaryDto, BudgetType as BudgetTypeValue } from '@/types/api';
 import { useBudgetList } from './hooks/useBudgetList';
 import {
-  useCreateBudget,
+  useCreateBudgetWithCategories,
   useUpdateBudget,
   useDeleteBudget,
   useRollForwardBudget,
@@ -23,19 +24,22 @@ import { BudgetCard } from './components/BudgetCard';
 import { BudgetListSkeleton } from './components/BudgetListSkeleton';
 import { BudgetFormSheet } from './components/BudgetFormSheet';
 import type { BudgetFormData } from './components/BudgetFormSheet';
+import type { PendingBudgetCategory } from './types';
 
 export function BudgetListPage() {
   const navigate = useNavigate();
 
   const [filterType, setFilterType] = useState<BudgetTypeValue | undefined>(undefined);
   const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [editTarget, setEditTarget] = useState<BudgetSummaryDto | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingCategories, setPendingCategories] = useState<PendingBudgetCategory[]>([]);
   const [rollingForwardId, setRollingForwardId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const listQuery = useBudgetList(filterType ? { budgetType: filterType } : undefined);
-  const createMutation = useCreateBudget();
+  const createWithCategories = useCreateBudgetWithCategories();
   const updateMutation = useUpdateBudget();
   const deleteMutation = useDeleteBudget();
   const rollForwardMutation = useRollForwardBudget();
@@ -44,12 +48,15 @@ export function BudgetListPage() {
 
   function openCreate() {
     setEditTarget(undefined);
+    setFormMode('create');
     setFormError(null);
+    setPendingCategories([]);
     setFormOpen(true);
   }
 
   function openEdit(budget: BudgetSummaryDto) {
     setEditTarget(budget);
+    setFormMode('edit');
     setFormError(null);
     setFormOpen(true);
   }
@@ -71,16 +78,19 @@ export function BudgetListPage() {
         },
       );
     } else {
-      createMutation.mutate(data, {
-        onSuccess: () => setFormOpen(false),
-        onError: (err) => {
-          setFormError(
-            axios.isAxiosError(err)
-              ? err.response?.data?.detail || err.response?.data?.title || err.message
-              : 'Failed to create budget.',
-          );
+      createWithCategories.mutate(
+        { budgetData: data, categories: pendingCategories },
+        {
+          onSuccess: () => setFormOpen(false),
+          onError: (err) => {
+            setFormError(
+              axios.isAxiosError(err)
+                ? err.response?.data?.detail || err.response?.data?.title || err.message
+                : 'Failed to create budget.',
+            );
+          },
         },
-      });
+      );
     }
   }
 
@@ -99,18 +109,18 @@ export function BudgetListPage() {
     });
   }
 
+  // Edit form only needs the basic fields (no planned totals)
   const editDefaultValues: Partial<BudgetFormData> | undefined = editTarget
     ? {
         name: editTarget.name,
         budgetType: editTarget.budgetType,
         startDate: editTarget.startDate,
         endDate: editTarget.endDate,
-        totalIncomePlanned: editTarget.totalIncomePlanned,
-        totalExpensesPlanned: editTarget.totalExpensesPlanned,
-        totalSavingsPlanned: editTarget.totalSavingsPlanned,
         isRecurring: editTarget.isRecurring,
       }
     : undefined;
+
+  const isSubmitting = createWithCategories.isPending || updateMutation.isPending;
 
   return (
     <div className="flex flex-col gap-6">
@@ -205,8 +215,10 @@ export function BudgetListPage() {
         submitLabel={editTarget ? 'Save Changes' : 'Create Budget'}
         defaultValues={editDefaultValues}
         onSubmit={handleFormSubmit}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
+        isSubmitting={isSubmitting}
         serverError={formError}
+        mode={formMode}
+        onCategoriesChange={setPendingCategories}
       />
     </div>
   );
