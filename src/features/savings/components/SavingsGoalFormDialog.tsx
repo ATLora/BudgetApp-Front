@@ -62,7 +62,7 @@ export function SavingsGoalFormDialog({
     ? {
         name: goal.name,
         targetAmount: goal.targetAmount,
-        targetDate: goal.targetDate ?? '',
+        targetDate: goal.targetDate?.split('T')[0] ?? '',
         description: goal.description ?? '',
       }
     : EMPTY_DEFAULTS;

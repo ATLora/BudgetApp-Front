@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
   Dialog,
@@ -95,6 +95,7 @@ export function TransactionFormDialog({
 }: TransactionFormDialogProps) {
   const isEdit = mode === 'edit';
   const [serverError, setServerError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -217,6 +218,7 @@ export function TransactionFormDialog({
                   budgetId: data.budgetId || null,
                   transactionId: newTransactionId,
                 });
+                queryClient.invalidateQueries({ queryKey: ['savings'] });
               } catch {
                 setServerError(
                   'Transaction created, but failed to link to savings goal. You can add the contribution manually.',

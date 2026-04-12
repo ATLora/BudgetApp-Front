@@ -42,6 +42,7 @@ export function SavingsDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingContributionId, setDeletingContributionId] = useState<string | null>(null);
+  const [confirmDeleteContribId, setConfirmDeleteContribId] = useState<string | null>(null);
 
   const detailQuery = useSavingsGoalDetail(id ?? '');
   const progressQuery = useSavingsGoalProgress(id ?? '');
@@ -79,6 +80,7 @@ export function SavingsDetailPage() {
   function handleDeleteContribution(contributionId: string) {
     if (!id) return;
     setDeletingContributionId(contributionId);
+    setConfirmDeleteContribId(null);
     deleteContribMutation.mutate(
       { goalId: id, contributionId },
       { onSettled: () => setDeletingContributionId(null) },
@@ -276,15 +278,34 @@ export function SavingsDetailPage() {
                     </p>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-shrink-0 text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDeleteContribution(c.id)}
-                  disabled={deletingContributionId === c.id}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {confirmDeleteContribId === c.id ? (
+                  <div className="flex flex-shrink-0 items-center gap-1">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteContribution(c.id)}
+                      disabled={deletingContributionId === c.id}
+                    >
+                      {deletingContributionId === c.id ? 'Deleting…' : 'Confirm'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmDeleteContribId(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-shrink-0 text-destructive hover:bg-destructive/10"
+                    onClick={() => setConfirmDeleteContribId(c.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>
