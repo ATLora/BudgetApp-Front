@@ -1,9 +1,8 @@
 import { LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Progress as ProgressRoot } from '@base-ui/react/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
+import { buttonVariants } from '@/components/ui/button';
+import { Progress as ProgressRoot, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatDate, formatPercent, formatVariance } from '@/lib/formatters';
 import type { BudgetHealthDto } from '@/types/api';
@@ -95,9 +94,7 @@ export function BudgetHealthCard({ currentBudget }: BudgetHealthCardProps) {
               Create a budget to start tracking your spending.
             </p>
           </div>
-          <Button asChild>
-            <Link to="/budgets">+ Create a budget</Link>
-          </Button>
+          <Link to="/budgets" className={buttonVariants()}>+ Create a budget</Link>
         </CardContent>
       </Card>
     );

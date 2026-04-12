@@ -11,6 +11,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { BudgetListPage } from '@/features/budgets/BudgetListPage';
 import { BudgetDetailPage } from '@/features/budgets/BudgetDetailPage';
 import { TransactionsPage } from '@/features/transactions/TransactionsPage';
+import { TransactionDetailPage } from '@/features/transactions/TransactionDetailPage';
 import { CategoriesPage } from '@/features/categories/CategoriesPage';
 import { SavingsListPage } from '@/features/savings/SavingsListPage';
 import { SavingsDetailPage } from '@/features/savings/SavingsDetailPage';
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
           { path: '/budgets', element: <BudgetListPage /> },
           { path: '/budgets/:id', element: <BudgetDetailPage /> },
           { path: '/transactions', element: <TransactionsPage /> },
+          { path: '/transactions/:id', element: <TransactionDetailPage /> },
           { path: '/categories', element: <CategoriesPage /> },
           { path: '/savings', element: <SavingsListPage /> },
           { path: '/savings/:id', element: <SavingsDetailPage /> },

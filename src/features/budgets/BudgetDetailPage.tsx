@@ -158,7 +158,7 @@ export function BudgetDetailPage() {
           {budget.isRecurring && (
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
+                <TooltipTrigger render={<span />}>
                   <span>
                     <Button
                       variant="outline"

@@ -67,7 +67,7 @@ export function MonthlyTrendsChart({ data, isLoading, isError, refetch }: Monthl
                     width={60}
                   />
                   <Tooltip
-                    formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                    formatter={(value, name) => [formatCurrency(typeof value === 'number' ? value : 0), String(name)]}
                     contentStyle={{
                       background: 'var(--color-card)',
                       border: '1px solid var(--color-border)',

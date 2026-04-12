@@ -1,3 +1,4 @@
+// src/features/transactions/hooks/useTransactionDetail.ts
 import { useQuery } from '@tanstack/react-query';
 import { transactionsApi } from '@/services/api/transactions';
 
