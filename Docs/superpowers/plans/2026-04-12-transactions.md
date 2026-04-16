@@ -447,7 +447,7 @@ const transactionSchema = z.object({
     ['Income', 'Expense', 'SavingsDeposit', 'SavingsWithdrawal'] as const,
   ),
   amount: z
-    .number({ invalid_type_error: 'Enter a valid amount' })
+    .number({ error: 'Enter a valid amount' })
     .positive('Amount must be greater than 0'),
   description: z.string().min(1, 'Description is required'),
   transactionDate: z.string().min(1, 'Date is required'),

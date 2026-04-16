@@ -163,7 +163,11 @@ export function BudgetCategoryFormSheet({
                     control={addForm.control}
                     name="categoryId"
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        items={Object.fromEntries(availableCategories.map((cat) => [cat.id, cat.name]))}
+                      >
                         <SelectTrigger
                           className="w-full"
                           aria-invalid={!!addForm.formState.errors.categoryId}

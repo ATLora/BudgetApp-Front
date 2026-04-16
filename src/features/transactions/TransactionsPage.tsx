@@ -68,6 +68,13 @@ export function TransactionsPage() {
           onValueChange={(v) =>
             setTypeFilter(!v || v === '__all__' ? undefined : (v as TxType))
           }
+          items={{
+            __all__: 'All types',
+            [TransactionType.Income]: 'Income',
+            [TransactionType.Expense]: 'Expense',
+            [TransactionType.SavingsDeposit]: 'Savings Deposit',
+            [TransactionType.SavingsWithdrawal]: 'Savings Withdrawal',
+          }}
         >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="All types" />
@@ -87,6 +94,10 @@ export function TransactionsPage() {
         <Select
           value={budgetFilter ?? '__all__'}
           onValueChange={(v) => setBudgetFilter(!v || v === '__all__' ? undefined : v)}
+          items={{
+            __all__: 'All budgets',
+            ...Object.fromEntries(budgets.map((b) => [b.id, b.name])),
+          }}
         >
           <SelectTrigger className="w-52">
             <SelectValue placeholder="All budgets" />

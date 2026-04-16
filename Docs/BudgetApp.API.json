@@ -404,7 +404,24 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteBudgetResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteBudgetResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteBudgetResult"
+                }
+              }
+            }
           }
         }
       }
@@ -2218,9 +2235,6 @@
           "startDate",
           "endDate",
           "budgetType",
-          "totalIncomePlanned",
-          "totalExpensesPlanned",
-          "totalSavingsPlanned",
           "isRecurring"
         ],
         "type": "object",
@@ -2238,18 +2252,6 @@
           },
           "budgetType": {
             "$ref": "#/components/schemas/BudgetType"
-          },
-          "totalIncomePlanned": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalExpensesPlanned": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalSavingsPlanned": {
-            "type": "number",
-            "format": "double"
           },
           "isRecurring": {
             "type": "boolean"
@@ -2561,6 +2563,32 @@
           },
           "savingsDirection": {
             "$ref": "#/components/schemas/TrendDirection"
+          }
+        }
+      },
+      "DeleteBudgetResult": {
+        "required": [
+          "budgetId",
+          "budgetName",
+          "transactionsDeleted",
+          "budgetCategoriesDeleted"
+        ],
+        "type": "object",
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "budgetName": {
+            "type": "string"
+          },
+          "transactionsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "budgetCategoriesDeleted": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -3294,9 +3322,6 @@
           "startDate",
           "endDate",
           "budgetType",
-          "totalIncomePlanned",
-          "totalExpensesPlanned",
-          "totalSavingsPlanned",
           "isRecurring"
         ],
         "type": "object",
@@ -3314,18 +3339,6 @@
           },
           "budgetType": {
             "$ref": "#/components/schemas/BudgetType"
-          },
-          "totalIncomePlanned": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalExpensesPlanned": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalSavingsPlanned": {
-            "type": "number",
-            "format": "double"
           },
           "isRecurring": {
             "type": "boolean"

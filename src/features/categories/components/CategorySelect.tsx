@@ -64,6 +64,10 @@ export function CategorySelect({
       value={value ?? ''}
       onValueChange={handleChange}
       disabled={disabled || isLoading}
+      items={{
+        ...Object.fromEntries(available.map((cat) => [cat.id, cat.name])),
+        __create_new__: '+ Create new category',
+      }}
     >
       <SelectTrigger className="w-full" aria-label="Select category" aria-invalid={isError || undefined}>
         <SelectValue

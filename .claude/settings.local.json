@@ -16,7 +16,26 @@
       "Bash(node -e \"const p = require\\(''./package.json''\\); [''recharts'',''@base-ui/react'',''@tanstack/react-query'',''react-router-dom'',''lucide-react''].forEach\\(d => console.log\\(d, \\(p.dependencies||{}\\)[d] || \\(p.devDependencies||{}\\)[d] || ''MISSING''\\)\\)\")",
       "Bash(npx tsc:*)",
       "Bash(gzip -c \"D:\\\\Personal Project\\\\BudgetApp\\\\BudgetApp-Front\\\\Docs\\\\backend-features.md\")",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(node:*)",
+      "Bash(npm list:*)",
+      "Bash(echo \"EXIT_CODE:$?\")",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"EXIT_CODE: $?\")",
+      "Bash(echo \"---EXIT:$?---\")",
+      "Bash(bun --version)",
+      "Bash(curl -fsSL https://bun.sh/install)",
+      "Bash(bash)",
+      "Bash(export BUN_INSTALL=\"$HOME/.bun\")",
+      "Bash(export PATH=\"$BUN_INSTALL/bin:$PATH\")",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Skill(telegram:access)",
+      "Bash(npx:*)",
+      "Bash(bun run:*)"
     ]
   }
 }

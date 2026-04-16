@@ -164,6 +164,10 @@ export function ContributionFormDialog({
                   value={field.value ?? ''}
                   onValueChange={(v) => field.onChange(v === '__none__' ? '' : v)}
                   disabled={budgetsQuery.isLoading}
+                  items={{
+                    __none__: 'None',
+                    ...Object.fromEntries(budgets.map((b) => [b.id, b.name])),
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue

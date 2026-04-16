@@ -259,6 +259,7 @@ export function TransactionFormDialog({
                     value={field.value}
                     onValueChange={field.onChange}
                     disabled={budgetsQuery.isLoading}
+                    items={Object.fromEntries(budgets.map((b) => [b.id, b.name]))}
                   >
                     <SelectTrigger
                       className="w-full"
@@ -323,6 +324,7 @@ export function TransactionFormDialog({
                   value={field.value}
                   onValueChange={field.onChange}
                   disabled={categoriesQuery.isLoading}
+                  items={Object.fromEntries(filteredCategories.map((c) => [c.id, c.name]))}
                 >
                   <SelectTrigger
                     className="w-full"
@@ -422,6 +424,10 @@ export function TransactionFormDialog({
                     value={field.value ?? ''}
                     onValueChange={(v) => field.onChange(v === '__none__' ? '' : v)}
                     disabled={savingsGoalsQuery.isLoading}
+                    items={{
+                      __none__: 'None',
+                      ...Object.fromEntries(activeSavingsGoals.map((g) => [g.id, g.name])),
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue

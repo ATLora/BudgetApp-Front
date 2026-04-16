@@ -109,6 +109,12 @@ export function SavingsListPage() {
           onValueChange={(v) =>
             setStatusFilter(!v || v === '__all__' ? undefined : (v as StatusType))
           }
+          items={{
+            __all__: 'All statuses',
+            Active: 'Active',
+            Completed: 'Completed',
+            Paused: 'Paused',
+          }}
         >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="All statuses" />
