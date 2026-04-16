@@ -16,6 +16,7 @@ import { BudgetReportTable } from './components/BudgetReportTable';
 import { BudgetCategoriesSection } from './components/BudgetCategoriesSection';
 import { BudgetFormSheet } from './components/BudgetFormSheet';
 import type { BudgetFormData } from './components/BudgetFormSheet';
+import { DeleteBudgetDialog } from './components/DeleteBudgetDialog';
 
 export function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,7 @@ export function BudgetDetailPage() {
 
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const detailQuery = useBudgetDetail(id!);
@@ -195,7 +196,7 @@ export function BudgetDetailPage() {
             size="sm"
             className="text-destructive border-destructive/30 hover:bg-destructive/10"
             onClick={() => {
-              setShowDeleteConfirm(true);
+              setDeleteDialogOpen(true);
               setDeleteError(null);
             }}
           >
@@ -204,36 +205,6 @@ export function BudgetDetailPage() {
           </Button>
         </div>
       </div>
-
-      {/* Delete confirm inline */}
-      {showDeleteConfirm && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-5 py-4 text-sm">
-          <p className="font-medium text-destructive">
-            Delete "{budget.name}"? This cannot be undone. Budgets with transactions cannot be deleted.
-          </p>
-          {deleteError && <p className="mt-1 text-destructive">{deleteError}</p>}
-          <div className="mt-3 flex gap-2">
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting…' : 'Confirm Delete'}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                setDeleteError(null);
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Health + Report */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -270,6 +241,15 @@ export function BudgetDetailPage() {
         onSubmit={handleEditSubmit}
         isSubmitting={updateMutation.isPending}
         serverError={formError}
+      />
+
+      <DeleteBudgetDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        budgetName={budget.name}
+        onConfirm={handleDelete}
+        isPending={deleteMutation.isPending}
+        error={deleteError}
       />
     </div>
   );
