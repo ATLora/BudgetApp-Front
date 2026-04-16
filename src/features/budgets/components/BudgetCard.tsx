@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { parseISO } from 'date-fns';
@@ -19,31 +18,22 @@ import { BudgetTypeBadge } from './BudgetTypeBadge';
 interface BudgetCardProps {
   budget: BudgetSummaryDto;
   onEdit: (budget: BudgetSummaryDto) => void;
-  onDelete: (id: string) => void;
+  onDeleteRequest: (budget: BudgetSummaryDto) => void;
   onRollForward: (id: string) => void;
   isRollingForward: boolean;
-  isDeleting: boolean;
 }
 
 export function BudgetCard({
   budget,
   onEdit,
-  onDelete,
+  onDeleteRequest,
   onRollForward,
   isRollingForward,
-  isDeleting,
 }: BudgetCardProps) {
   const navigate = useNavigate();
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const periodEnded = parseISO(budget.endDate) < new Date();
   const canRollForward = budget.isRecurring && periodEnded;
-
-  function handleDelete() {
-    setDeleteError(null);
-    onDelete(budget.id);
-  }
 
   return (
     <Card
@@ -83,10 +73,7 @@ export function BudgetCard({
                 )}
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onClick={() => {
-                    setConfirmDelete(true);
-                    setDeleteError(null);
-                  }}
+                  onClick={() => onDeleteRequest(budget)}
                 >
                   <Trash2 className="mr-2 h-3.5 w-3.5" />
                   Delete
@@ -158,40 +145,6 @@ export function BudgetCard({
                 )}
               </Tooltip>
             </TooltipProvider>
-          </div>
-        )}
-
-        {/* Inline delete confirm */}
-        {confirmDelete && (
-          <div
-            className="rounded-lg bg-destructive/10 px-3 py-2 text-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-medium text-destructive">Delete this budget?</p>
-            <p className="text-xs text-muted-foreground">
-              Cannot delete if it has transactions.
-            </p>
-            {deleteError && <p className="mt-1 text-xs text-destructive">{deleteError}</p>}
-            <div className="mt-2 flex gap-2">
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting…' : 'Delete'}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setConfirmDelete(false);
-                  setDeleteError(null);
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
           </div>
         )}
       </CardContent>

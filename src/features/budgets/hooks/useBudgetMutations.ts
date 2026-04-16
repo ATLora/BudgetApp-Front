@@ -23,6 +23,8 @@ export function useDeleteBudget() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets', 'list'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['savings'] });
     },
   });
 }

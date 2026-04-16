@@ -24,6 +24,7 @@ import { BudgetCard } from './components/BudgetCard';
 import { BudgetListSkeleton } from './components/BudgetListSkeleton';
 import { BudgetFormSheet } from './components/BudgetFormSheet';
 import type { BudgetFormData } from './components/BudgetFormSheet';
+import { DeleteBudgetDialog } from './components/DeleteBudgetDialog';
 import type { PendingBudgetCategory } from './types';
 
 export function BudgetListPage() {
@@ -36,7 +37,8 @@ export function BudgetListPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingCategories, setPendingCategories] = useState<PendingBudgetCategory[]>([]);
   const [rollingForwardId, setRollingForwardId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BudgetSummaryDto | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const listQuery = useBudgetList(filterType ? { budgetType: filterType } : undefined);
   const createWithCategories = useCreateBudgetWithCategories();
@@ -95,10 +97,23 @@ export function BudgetListPage() {
     }
   }
 
-  function handleDelete(id: string) {
-    setDeletingId(id);
-    deleteMutation.mutate(id, {
-      onSettled: () => setDeletingId(null),
+  function handleDeleteRequest(budget: BudgetSummaryDto) {
+    setDeleteTarget(budget);
+    setDeleteError(null);
+  }
+
+  function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    setDeleteError(null);
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
+      onError: (err) => {
+        setDeleteError(
+          axios.isAxiosError(err)
+            ? err.response?.data?.detail || err.response?.data?.title || err.message
+            : 'Failed to delete budget.',
+        );
+      },
     });
   }
 
@@ -200,10 +215,9 @@ export function BudgetListPage() {
               key={budget.id}
               budget={budget}
               onEdit={openEdit}
-              onDelete={handleDelete}
+              onDeleteRequest={handleDeleteRequest}
               onRollForward={handleRollForward}
               isRollingForward={rollingForwardId === budget.id}
-              isDeleting={deletingId === budget.id}
             />
           ))}
         </div>
@@ -220,6 +234,20 @@ export function BudgetListPage() {
         serverError={formError}
         mode={formMode}
         onCategoriesChange={setPendingCategories}
+      />
+
+      <DeleteBudgetDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+        budgetName={deleteTarget?.name ?? ''}
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteMutation.isPending}
+        error={deleteError}
       />
     </div>
   );
