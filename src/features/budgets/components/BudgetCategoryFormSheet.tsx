@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+// src/features/budgets/components/BudgetCategoryFormSheet.tsx
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
 import {
   Sheet,
   SheetContent,
@@ -13,15 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { categoriesApi } from '@/services/api/categories';
-import type { BudgetCategoryDto } from '@/types/api';
+import { CategorySelect } from '@/features/categories/components/CategorySelect';
+import { NewCategoryInlineForm } from '@/features/categories/components/NewCategoryInlineForm';
+import type { BudgetCategoryDto, CategoryDto } from '@/types/api';
 
 const addSchema = z.object({
   categoryId: z.string().min(1, 'Select a category'),
@@ -60,17 +54,8 @@ export function BudgetCategoryFormSheet({
   serverError,
 }: BudgetCategoryFormSheetProps) {
   const isEditMode = !!editTarget;
-
-  const categoriesQuery = useQuery({
-    queryKey: ['categories', 'list'],
-    queryFn: () => categoriesApi.list(),
-    staleTime: 10 * 60 * 1000,
-    enabled: open && !isEditMode,
-  });
-
-  const availableCategories = (categoriesQuery.data ?? []).filter(
-    (c) => !existingCategoryIds.includes(c.id),
-  );
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryDto | null>(null);
 
   const addForm = useForm<AddFormData>({
     resolver: zodResolver(addSchema),
@@ -91,9 +76,22 @@ export function BudgetCategoryFormSheet({
         editForm.reset({ plannedAmount: editTarget.plannedAmount, notes: editTarget.notes ?? '' });
       } else {
         addForm.reset({ categoryId: '', plannedAmount: 0, notes: '' });
+        setShowCreateForm(false);
+        setSelectedCategory(null);
       }
     }
   }, [open, isEditMode, editTarget, addForm, editForm]);
+
+  function handleCategorySelect(cat: CategoryDto) {
+    setSelectedCategory(cat);
+    setShowCreateForm(false);
+    addForm.setValue('categoryId', cat.id, { shouldValidate: true });
+  }
+
+  function handleCategoryCreated(cat: CategoryDto) {
+    setShowCreateForm(false);
+    handleCategorySelect(cat);
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -156,33 +154,17 @@ export function BudgetCategoryFormSheet({
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
                 <Label>Category</Label>
-                {categoriesQuery.isLoading ? (
-                  <div className="h-8 animate-pulse rounded-lg bg-muted" />
-                ) : (
-                  <Controller
-                    control={addForm.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        items={Object.fromEntries(availableCategories.map((cat) => [cat.id, cat.name]))}
-                      >
-                        <SelectTrigger
-                          className="w-full"
-                          aria-invalid={!!addForm.formState.errors.categoryId}
-                        >
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableCategories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                <CategorySelect
+                  value={selectedCategory?.id ?? null}
+                  onSelect={handleCategorySelect}
+                  onCreateRequest={() => setShowCreateForm(true)}
+                  excludeIds={existingCategoryIds}
+                  disabled={isSubmitting}
+                />
+                {showCreateForm && (
+                  <NewCategoryInlineForm
+                    onCreated={handleCategoryCreated}
+                    onCancel={() => setShowCreateForm(false)}
                   />
                 )}
                 {addForm.formState.errors.categoryId && (
