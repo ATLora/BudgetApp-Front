@@ -93,7 +93,7 @@ Replace the current plain Select with `CategorySelect`. Add `showCreateForm: boo
 
 **Add mode flow:**
 1. `CategorySelect` renders with `excludeIds={existingCategoryIds}` and `onCreateRequest={() => setShowCreateForm(true)}`
-2. **Existing category selected** → amount/notes fields appear → submit unchanged
+2. **Existing category selected** → `showCreateForm` resets to `false` (hides form if open), amount/notes fields appear → submit unchanged
 3. **"+ Create new category" clicked** → `showCreateForm = true` → `NewCategoryInlineForm` appears below the dropdown
 4. **Creation completed** (`onCreated(cat)`) → `showCreateForm = false`, new category auto-selected in form state, amount/notes appear
 5. **Creation cancelled** (`onCancel`) → `showCreateForm = false`, selection cleared
