@@ -69,6 +69,7 @@ export function NewCategoryInlineForm({ onCreated, onCancel }: NewCategoryInline
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Housing"
           autoFocus
+          disabled={isSubmitting}
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); handleConfirm(); }
           }}
@@ -78,7 +79,7 @@ export function NewCategoryInlineForm({ onCreated, onCancel }: NewCategoryInline
       <div className="space-y-1.5">
         <Label className="text-xs">Type</Label>
         <Select value={categoryType} onValueChange={(val) => { if (val !== null) setCategoryType(val); }}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" disabled={isSubmitting}>
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>
