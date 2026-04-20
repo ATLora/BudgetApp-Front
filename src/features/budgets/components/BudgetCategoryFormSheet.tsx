@@ -34,7 +34,6 @@ type EditFormData = z.infer<typeof editSchema>;
 interface BudgetCategoryFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  budgetId: string;
   editTarget?: BudgetCategoryDto;
   existingCategoryIds?: string[];
   onAdd: (data: AddFormData) => void;
@@ -71,14 +70,17 @@ export function BudgetCategoryFormSheet({
   });
 
   useEffect(() => {
-    if (open) {
-      if (isEditMode && editTarget) {
-        editForm.reset({ plannedAmount: editTarget.plannedAmount, notes: editTarget.notes ?? '' });
-      } else {
-        addForm.reset({ categoryId: '', plannedAmount: 0, notes: '' });
-        setShowCreateForm(false);
-        setSelectedCategory(null);
-      }
+    if (!open) {
+      setShowCreateForm(false);
+      setSelectedCategory(null);
+      return;
+    }
+    if (isEditMode && editTarget) {
+      editForm.reset({ plannedAmount: editTarget.plannedAmount, notes: editTarget.notes ?? '' });
+    } else {
+      addForm.reset({ categoryId: '', plannedAmount: 0, notes: '' });
+      setShowCreateForm(false);
+      setSelectedCategory(null);
     }
   }, [open, isEditMode, editTarget, addForm, editForm]);
 

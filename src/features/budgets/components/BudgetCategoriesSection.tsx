@@ -250,7 +250,6 @@ export function BudgetCategoriesSection({
       <BudgetCategoryFormSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
-        budgetId={budgetId}
         editTarget={editTarget}
         existingCategoryIds={existingCategoryIds}
         onAdd={handleAdd}
