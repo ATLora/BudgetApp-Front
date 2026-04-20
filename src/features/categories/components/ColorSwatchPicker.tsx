@@ -44,7 +44,7 @@ export function ColorSwatchPicker({ value, onChange, disabled = false }: ColorSw
             style={{ backgroundColor: swatch.hex }}
           >
             {selected && (
-              <Check className="mx-auto size-3.5 text-white drop-shadow-sm" />
+              <Check aria-hidden="true" className="mx-auto size-3.5 text-white drop-shadow-sm" />
             )}
           </button>
         );
