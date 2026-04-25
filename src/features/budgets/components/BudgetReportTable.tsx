@@ -72,46 +72,32 @@ export function BudgetReportTable({ data, isLoading, isError, refetch }: BudgetR
                 ))}
 
                 {/* Totals row */}
-                <div className="grid grid-cols-4 gap-2 border-t pt-2 text-sm font-semibold">
-                  <span>Total</span>
-                  <span className="text-right">
-                    {formatCurrency(
-                      data.totalIncomePlanned +
-                        data.totalExpensesPlanned +
-                        data.totalSavingsPlanned,
-                    )}
-                  </span>
-                  <span className="text-right">
-                    {formatCurrency(
-                      data.totalIncomeActual +
-                        data.totalExpensesActual +
-                        data.totalSavingsActual,
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-right',
-                      data.totalIncomePlanned +
-                        data.totalExpensesPlanned +
-                        data.totalSavingsPlanned -
-                        (data.totalIncomeActual +
-                          data.totalExpensesActual +
-                          data.totalSavingsActual) >=
-                        0
-                        ? 'text-emerald-600'
-                        : 'text-rose-600',
-                    )}
-                  >
-                    {formatVariance(
-                      data.totalIncomePlanned +
-                        data.totalExpensesPlanned +
-                        data.totalSavingsPlanned -
-                        (data.totalIncomeActual +
-                          data.totalExpensesActual +
-                          data.totalSavingsActual),
-                    )}
-                  </span>
-                </div>
+                {(() => {
+                  const netPlanned =
+                    data.totalIncomePlanned -
+                    data.totalExpensesPlanned -
+                    data.totalSavingsPlanned;
+                  const netActual =
+                    data.totalIncomeActual -
+                    data.totalExpensesActual -
+                    data.totalSavingsActual;
+                  const netVariance = netPlanned - netActual;
+                  return (
+                    <div className="grid grid-cols-4 gap-2 border-t pt-2 text-sm font-semibold">
+                      <span>Total</span>
+                      <span className="text-right">{formatCurrency(netPlanned)}</span>
+                      <span className="text-right">{formatCurrency(netActual)}</span>
+                      <span
+                        className={cn(
+                          'text-right',
+                          netVariance >= 0 ? 'text-emerald-600' : 'text-rose-600',
+                        )}
+                      >
+                        {formatVariance(netVariance)}
+                      </span>
+                    </div>
+                  );
+                })()}
               </>
             )}
           </div>

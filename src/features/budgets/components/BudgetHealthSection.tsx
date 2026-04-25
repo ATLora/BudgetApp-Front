@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress as ProgressRoot, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatPercent, formatVariance } from '@/lib/formatters';
-import type { BudgetHealthDto } from '@/types/api';
+import type { BudgetSummaryReportDto } from '@/types/api';
 
 function progressColorClass(pct: number, invertGood: boolean): string {
   if (invertGood) {
@@ -73,7 +73,7 @@ function BudgetProgressRow({ label, planned, actual, invertGood = false }: Budge
 }
 
 interface BudgetHealthSectionProps {
-  data: BudgetHealthDto | undefined;
+  data: BudgetSummaryReportDto | undefined;
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
@@ -81,9 +81,9 @@ interface BudgetHealthSectionProps {
 
 export function BudgetHealthSection({ data, isLoading, isError, refetch }: BudgetHealthSectionProps) {
   const allOnTrack = data
-    ? data.expensesActual <= data.expensesPlanned &&
-      data.savingsActual >= data.savingsPlanned * 0.8 &&
-      data.incomeActual >= data.incomePlanned * 0.8
+    ? data.totalExpensesActual <= data.totalExpensesPlanned &&
+      data.totalSavingsActual >= data.totalSavingsPlanned * 0.8 &&
+      data.totalIncomeActual >= data.totalIncomePlanned * 0.8
     : false;
 
   return (
@@ -116,32 +116,39 @@ export function BudgetHealthSection({ data, isLoading, isError, refetch }: Budge
             )}
             <BudgetProgressRow
               label="Income"
-              planned={data.incomePlanned}
-              actual={data.incomeActual}
+              planned={data.totalIncomePlanned}
+              actual={data.totalIncomeActual}
               invertGood
             />
             <BudgetProgressRow
               label="Expenses"
-              planned={data.expensesPlanned}
-              actual={data.expensesActual}
+              planned={data.totalExpensesPlanned}
+              actual={data.totalExpensesActual}
             />
             <BudgetProgressRow
               label="Savings"
-              planned={data.savingsPlanned}
-              actual={data.savingsActual}
+              planned={data.totalSavingsPlanned}
+              actual={data.totalSavingsActual}
               invertGood
             />
-            <div className="flex items-center justify-between border-t pt-3 text-sm">
-              <span className="text-muted-foreground">Overall variance</span>
-              <span
-                className={cn(
-                  'font-semibold',
-                  data.overallBudgetVariance >= 0 ? 'text-emerald-600' : 'text-rose-600',
-                )}
-              >
-                {formatVariance(data.overallBudgetVariance)}
-              </span>
-            </div>
+            {(() => {
+              const overallVariance =
+                (data.totalIncomeActual - data.totalExpensesActual - data.totalSavingsActual) -
+                (data.totalIncomePlanned - data.totalExpensesPlanned - data.totalSavingsPlanned);
+              return (
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="text-muted-foreground">Overall variance</span>
+                  <span
+                    className={cn(
+                      'font-semibold',
+                      overallVariance >= 0 ? 'text-emerald-600' : 'text-rose-600',
+                    )}
+                  >
+                    {formatVariance(overallVariance)}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         )}
       </CardContent>

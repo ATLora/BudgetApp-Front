@@ -3,7 +3,6 @@ import type {
   AddBudgetCategoryRequest,
   BudgetCategoryDto,
   BudgetDetailDto,
-  BudgetHealthDto,
   BudgetListParams,
   BudgetSummaryDto,
   BudgetSummaryReportDto,
@@ -28,11 +27,8 @@ export const budgetsApi = {
   delete: (id: string) =>
     client.delete(`/api/v1/budgets/${id}`).then((r) => r.data),
 
-  getSummary: (id: string) =>
-    client.get<BudgetHealthDto>(`/api/v1/budgets/${id}/summary`).then((r) => r.data),
-
   getReport: (id: string) =>
-    client.get<BudgetSummaryReportDto>(`/api/v1/budgets/${id}/report`).then((r) => r.data),
+    client.get<BudgetSummaryReportDto>(`/api/v1/budgets/${id}/summary`).then((r) => r.data),
 
   getCategories: (id: string) =>
     client.get<BudgetCategoryDto[]>(`/api/v1/budgets/${id}/categories`).then((r) => r.data),
