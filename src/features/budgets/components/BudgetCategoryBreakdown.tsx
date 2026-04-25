@@ -1,6 +1,7 @@
 // src/features/budgets/components/BudgetCategoryBreakdown.tsx
 import { useState } from 'react';
 import { Plus, AlertCircle, RefreshCw, Info, Pencil, Trash2 } from 'lucide-react';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +26,6 @@ import { BudgetCategoryFormSheet } from './BudgetCategoryFormSheet';
 
 interface MergedRow {
   id: string;
-  categoryId: string;
   categoryName: string;
   categoryType: BudgetCategoryDto['categoryType'];
   notes: string | null | undefined;
@@ -63,7 +63,6 @@ function mergeRows(
     const actuals = actualsById.get(c.id);
     return {
       id: c.id,
-      categoryId: c.categoryId,
       categoryName: c.categoryName,
       categoryType: c.categoryType,
       notes: c.notes,
@@ -140,13 +139,11 @@ export function BudgetCategoryBreakdown({
       {
         onSuccess: () => setSheetOpen(false),
         onError: (err) => {
-          import('axios').then(({ default: axios }) => {
-            if (axios.isAxiosError(err)) {
-              setCatError(err.response?.data?.detail || err.response?.data?.title || err.message);
-            } else {
-              setCatError('Failed to add category.');
-            }
-          });
+          if (axios.isAxiosError(err)) {
+            setCatError(err.response?.data?.detail || err.response?.data?.title || err.message);
+          } else {
+            setCatError('Failed to add category.');
+          }
         },
       },
     );
@@ -158,13 +155,11 @@ export function BudgetCategoryBreakdown({
       {
         onSuccess: () => setSheetOpen(false),
         onError: (err) => {
-          import('axios').then(({ default: axios }) => {
-            if (axios.isAxiosError(err)) {
-              setCatError(err.response?.data?.detail || err.response?.data?.title || err.message);
-            } else {
-              setCatError('Failed to update category.');
-            }
-          });
+          if (axios.isAxiosError(err)) {
+            setCatError(err.response?.data?.detail || err.response?.data?.title || err.message);
+          } else {
+            setCatError('Failed to update category.');
+          }
         },
       },
     );
@@ -175,13 +170,11 @@ export function BudgetCategoryBreakdown({
     deleteMutation.mutate(catId, {
       onSuccess: () => setConfirmingDeleteId(null),
       onError: (err) => {
-        import('axios').then(({ default: axios }) => {
-          if (axios.isAxiosError(err)) {
-            setDeleteError(err.response?.data?.detail || err.response?.data?.title || err.message);
-          } else {
-            setDeleteError('Failed to delete category.');
-          }
-        });
+        if (axios.isAxiosError(err)) {
+          setDeleteError(err.response?.data?.detail || err.response?.data?.title || err.message);
+        } else {
+          setDeleteError('Failed to delete category.');
+        }
       },
     });
   }
