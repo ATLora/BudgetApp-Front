@@ -12,8 +12,7 @@ import { useBudgetReport } from './hooks/useBudgetReport';
 import { useUpdateBudget, useDeleteBudget, useRollForwardBudget } from './hooks/useBudgetMutations';
 import { BudgetTypeBadge } from './components/BudgetTypeBadge';
 import { BudgetHealthSection } from './components/BudgetHealthSection';
-import { BudgetReportTable } from './components/BudgetReportTable';
-import { BudgetCategoriesSection } from './components/BudgetCategoriesSection';
+import { BudgetCategoryBreakdown } from './components/BudgetCategoryBreakdown';
 import { BudgetFormSheet } from './components/BudgetFormSheet';
 import type { BudgetFormData } from './components/BudgetFormSheet';
 import { DeleteBudgetDialog } from './components/DeleteBudgetDialog';
@@ -91,11 +90,8 @@ export function BudgetDetailPage() {
       <div className="flex flex-col gap-6">
         <div className="h-8 w-32 animate-pulse rounded bg-muted" />
         <div className="h-16 animate-pulse rounded-xl bg-muted" />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="h-64 animate-pulse rounded-xl bg-muted" />
-          <div className="h-64 animate-pulse rounded-xl bg-muted" />
-        </div>
-        <div className="h-48 animate-pulse rounded-xl bg-muted" />
+        <div className="h-64 animate-pulse rounded-xl bg-muted" />
+        <div className="h-96 animate-pulse rounded-xl bg-muted" />
       </div>
     );
   }
@@ -206,29 +202,25 @@ export function BudgetDetailPage() {
         </div>
       </div>
 
-      {/* Health + Report */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <BudgetHealthSection
-          data={healthQuery.data}
-          isLoading={healthQuery.isLoading}
-          isError={healthQuery.isError}
-          refetch={healthQuery.refetch}
-        />
-        <BudgetReportTable
-          data={reportQuery.data}
-          isLoading={reportQuery.isLoading}
-          isError={reportQuery.isError}
-          refetch={reportQuery.refetch}
-        />
-      </div>
+      {/* Health */}
+      <BudgetHealthSection
+        data={healthQuery.data}
+        isLoading={healthQuery.isLoading}
+        isError={healthQuery.isError}
+        refetch={healthQuery.refetch}
+      />
 
-      {/* Categories */}
-      <BudgetCategoriesSection
+      {/* Categories + Report */}
+      <BudgetCategoryBreakdown
         budgetId={id!}
         categories={budget.categories}
-        isLoading={detailQuery.isLoading}
-        isError={detailQuery.isError}
-        refetch={detailQuery.refetch}
+        report={reportQuery.data}
+        isLoading={detailQuery.isLoading || reportQuery.isLoading}
+        isError={detailQuery.isError || reportQuery.isError}
+        refetch={() => {
+          detailQuery.refetch();
+          reportQuery.refetch();
+        }}
       />
 
       {/* Edit sheet */}
