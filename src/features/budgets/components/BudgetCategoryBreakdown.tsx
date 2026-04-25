@@ -34,24 +34,6 @@ interface MergedRow {
   variance: number;
 }
 
-interface GroupTotals {
-  plannedAmount: number;
-  actualAmount: number;
-  variance: number;
-}
-
-const GROUP_ORDER = [
-  CategoryType.Income,
-  CategoryType.Expense,
-  CategoryType.Savings,
-] as const;
-
-const GROUP_LABEL: Record<string, string> = {
-  [CategoryType.Income]: 'Income',
-  [CategoryType.Expense]: 'Expenses',
-  [CategoryType.Savings]: 'Savings',
-};
-
 function mergeRows(
   categories: BudgetCategoryDto[],
   report: BudgetSummaryReportDto,
@@ -73,25 +55,19 @@ function mergeRows(
   });
 }
 
-function groupRows(rows: MergedRow[]): Map<string, MergedRow[]> {
-  const groups = new Map<string, MergedRow[]>();
-  for (const row of rows) {
-    const list = groups.get(row.categoryType) ?? [];
-    list.push(row);
-    groups.set(row.categoryType, list);
-  }
-  return groups;
-}
+const TYPE_BORDER_CLASS: Record<CategoryType, string> = {
+  [CategoryType.Income]: 'border-l-emerald-500',
+  [CategoryType.Expense]: 'border-l-rose-500',
+  [CategoryType.Savings]: 'border-l-sky-500',
+};
 
-function sumGroup(rows: MergedRow[]): GroupTotals {
-  return rows.reduce<GroupTotals>(
-    (acc, r) => ({
-      plannedAmount: acc.plannedAmount + r.plannedAmount,
-      actualAmount: acc.actualAmount + r.actualAmount,
-      variance: acc.variance + r.variance,
-    }),
-    { plannedAmount: 0, actualAmount: 0, variance: 0 },
-  );
+function sortByType(rows: MergedRow[]): MergedRow[] {
+  const order: Record<CategoryType, number> = {
+    [CategoryType.Income]: 0,
+    [CategoryType.Expense]: 1,
+    [CategoryType.Savings]: 2,
+  };
+  return [...rows].sort((a, b) => order[a.categoryType] - order[b.categoryType]);
 }
 
 interface BudgetCategoryBreakdownProps {
@@ -222,136 +198,107 @@ export function BudgetCategoryBreakdown({
           )}
 
           {!isLoading && !isError && categories.length > 0 && report && (() => {
-            const rows = mergeRows(categories, report);
-            const grouped = groupRows(rows);
+            const rows = sortByType(mergeRows(categories, report));
             return (
-              <div className="space-y-4">
-                {/* Column header — shared 5-col grid with data rows */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 px-1 pb-1 text-xs font-medium text-muted-foreground">
+              <div className="space-y-1">
+                {/* Column header — transparent left border keeps x-alignment with data rows */}
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 border-l-4 border-transparent pb-1 pl-3 pr-1 text-xs font-medium text-muted-foreground">
                   <span>Category</span>
                   <span className="w-24 text-right">Planned</span>
                   <span className="w-24 text-right">Actual</span>
                   <span className="w-28 text-right">Variance</span>
-                  <span className="w-16" />
+                  <span className="w-8" />
                 </div>
 
-                {GROUP_ORDER.map((type) => {
-                  const groupRowsForType = grouped.get(type);
-                  if (!groupRowsForType || groupRowsForType.length === 0) return null;
-                  const totals = sumGroup(groupRowsForType);
+                {rows.map((row) => {
+                  const dto = categories.find((c) => c.id === row.id);
                   return (
-                    <div key={type} className="space-y-1">
-                      <div className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {GROUP_LABEL[type]}
-                      </div>
-
-                      {groupRowsForType.map((row) => {
-                        // Re-find the source DTO for the edit sheet (mergeRows drops some fields).
-                        const dto = categories.find((c) => c.id === row.id);
-                        return (
-                          <div key={row.id}>
-                            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-md px-1 py-2 text-sm hover:bg-muted/50">
-                              <span className="flex items-center gap-1.5 font-medium">
-                                {row.categoryName}
-                                {row.notes && (
-                                  <Tooltip>
-                                    <TooltipTrigger render={<span />}>
-                                      <Info className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>{row.notes}</TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </span>
-                              <span className="w-24 text-right text-muted-foreground">
-                                {formatCurrency(row.plannedAmount)}
-                              </span>
-                              <span className="w-24 text-right">
-                                {formatCurrency(row.actualAmount)}
-                              </span>
-                              <span
-                                className={cn(
-                                  'w-28 text-right font-medium',
-                                  row.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
-                                )}
-                              >
-                                {formatVariance(row.variance)}
-                              </span>
-                              <span className="flex w-16 items-center justify-end gap-1">
-                                {dto && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    onClick={() => openEdit(dto)}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    setConfirmingDeleteId(row.id);
-                                    setDeleteError(null);
-                                  }}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </span>
-                            </div>
-
-                            {confirmingDeleteId === row.id && (
-                              <div className="mx-1 mb-1 rounded-lg bg-destructive/10 px-3 py-2 text-sm">
-                                <p className="font-medium text-destructive">
-                                  Remove {row.categoryName} from this budget?
-                                </p>
-                                {deleteError && (
-                                  <p className="mt-1 text-xs text-destructive">{deleteError}</p>
-                                )}
-                                <div className="mt-2 flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => handleDelete(row.id)}
-                                    disabled={deleteMutation.isPending}
-                                  >
-                                    {deleteMutation.isPending ? 'Removing…' : 'Remove'}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setConfirmingDeleteId(null);
-                                      setDeleteError(null);
-                                    }}
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 border-t px-1 pt-2 text-sm font-semibold">
-                        <span>Subtotal</span>
-                        <span className="w-24 text-right">
-                          {formatCurrency(totals.plannedAmount)}
+                    <div key={row.id}>
+                      <div
+                        className={cn(
+                          'grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-md border-l-4 py-2 pl-3 pr-1 text-sm hover:bg-muted/50',
+                          TYPE_BORDER_CLASS[row.categoryType],
+                        )}
+                      >
+                        <span className="flex items-center gap-1.5 font-medium">
+                          {row.categoryName}
+                          {row.notes && (
+                            <Tooltip>
+                              <TooltipTrigger render={<span />}>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                              </TooltipTrigger>
+                              <TooltipContent>{row.notes}</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </span>
+                        <span className="w-24 text-right text-muted-foreground">
+                          {formatCurrency(row.plannedAmount)}
                         </span>
                         <span className="w-24 text-right">
-                          {formatCurrency(totals.actualAmount)}
+                          {formatCurrency(row.actualAmount)}
                         </span>
                         <span
                           className={cn(
-                            'w-28 text-right',
-                            totals.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
+                            'w-28 text-right font-medium',
+                            row.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
                           )}
                         >
-                          {formatVariance(totals.variance)}
+                          {formatVariance(row.variance)}
                         </span>
-                        <span className="w-16" />
+                        <span className="flex w-8 items-center justify-end">
+                          {dto && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => openEdit(dto)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              setConfirmingDeleteId(row.id);
+                              setDeleteError(null);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </span>
                       </div>
+
+                      {confirmingDeleteId === row.id && (
+                        <div className="mx-1 mb-1 rounded-lg bg-destructive/10 px-3 py-2 text-sm">
+                          <p className="font-medium text-destructive">
+                            Remove {row.categoryName} from this budget?
+                          </p>
+                          {deleteError && (
+                            <p className="mt-1 text-xs text-destructive">{deleteError}</p>
+                          )}
+                          <div className="mt-2 flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(row.id)}
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? 'Removing…' : 'Remove'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setConfirmingDeleteId(null);
+                                setDeleteError(null);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
