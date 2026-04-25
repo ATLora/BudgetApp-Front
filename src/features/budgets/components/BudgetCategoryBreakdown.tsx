@@ -1,8 +1,14 @@
 // src/features/budgets/components/BudgetCategoryBreakdown.tsx
 import { useState } from 'react';
-import { Plus, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { CategoryType } from '@/types/api';
 import type {
   BudgetCategoryDto,
@@ -202,7 +208,19 @@ export function BudgetCategoryBreakdown({
                           key={row.id}
                           className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-md px-1 py-2 text-sm hover:bg-muted/50"
                         >
-                          <span className="font-medium">{row.categoryName}</span>
+                          <span className="flex items-center gap-1.5 font-medium">
+                            {row.categoryName}
+                            {row.notes && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger render={<span />}>
+                                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>{row.notes}</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </span>
                           <span className="w-24 text-right text-muted-foreground">
                             {formatCurrency(row.plannedAmount)}
                           </span>
