@@ -1,6 +1,6 @@
 // src/features/budgets/components/BudgetCategoryBreakdown.tsx
 import { useState } from 'react';
-import { Plus, AlertCircle, RefreshCw, Info } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, Info, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -122,18 +122,68 @@ export function BudgetCategoryBreakdown({
   const updateMutation = useUpdateBudgetCategory(budgetId);
   const deleteMutation = useDeleteBudgetCategory(budgetId);
 
-  // Declared up-front for Task 4 — referenced here to satisfy the unused-var checks
-  // until the delete flow is wired in.
-  void confirmingDeleteId;
-  void setConfirmingDeleteId;
-  void deleteError;
-  void setDeleteError;
-  void deleteMutation;
-
   function openAdd() {
     setEditTarget(undefined);
     setCatError(null);
     setSheetOpen(true);
+  }
+
+  function openEdit(cat: BudgetCategoryDto) {
+    setEditTarget(cat);
+    setCatError(null);
+    setSheetOpen(true);
+  }
+
+  function handleAdd(data: { categoryId: string; plannedAmount: number; notes?: string }) {
+    addMutation.mutate(
+      { categoryId: data.categoryId, plannedAmount: data.plannedAmount, notes: data.notes },
+      {
+        onSuccess: () => setSheetOpen(false),
+        onError: (err) => {
+          import('axios').then(({ default: axios }) => {
+            if (axios.isAxiosError(err)) {
+              setCatError(err.response?.data?.detail || err.response?.data?.title || err.message);
+            } else {
+              setCatError('Failed to add category.');
+            }
+          });
+        },
+      },
+    );
+  }
+
+  function handleEdit(catId: string, data: { plannedAmount: number; notes?: string }) {
+    updateMutation.mutate(
+      { catId, data: { plannedAmount: data.plannedAmount, notes: data.notes } },
+      {
+        onSuccess: () => setSheetOpen(false),
+        onError: (err) => {
+          import('axios').then(({ default: axios }) => {
+            if (axios.isAxiosError(err)) {
+              setCatError(err.response?.data?.detail || err.response?.data?.title || err.message);
+            } else {
+              setCatError('Failed to update category.');
+            }
+          });
+        },
+      },
+    );
+  }
+
+  function handleDelete(catId: string) {
+    setDeleteError(null);
+    deleteMutation.mutate(catId, {
+      onSuccess: () => setConfirmingDeleteId(null),
+      onError: (err) => {
+        import('axios').then(({ default: axios }) => {
+          if (axios.isAxiosError(err)) {
+            setDeleteError(err.response?.data?.detail || err.response?.data?.title || err.message);
+          } else {
+            setDeleteError('Failed to delete category.');
+          }
+        });
+      },
+    });
   }
 
   const existingCategoryIds = categories.map((c) => c.categoryId);
@@ -202,39 +252,94 @@ export function BudgetCategoryBreakdown({
                         {GROUP_LABEL[type]}
                       </div>
 
-                      {groupRowsForType.map((row) => (
-                        <div
-                          key={row.id}
-                          className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-md px-1 py-2 text-sm hover:bg-muted/50"
-                        >
-                          <span className="flex items-center gap-1.5 font-medium">
-                            {row.categoryName}
-                            {row.notes && (
-                              <Tooltip>
-                                <TooltipTrigger render={<span />}>
-                                  <Info className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                                </TooltipTrigger>
-                                <TooltipContent>{row.notes}</TooltipContent>
-                              </Tooltip>
+                      {groupRowsForType.map((row) => {
+                        // Re-find the source DTO for the edit sheet (mergeRows drops some fields).
+                        const dto = categories.find((c) => c.id === row.id);
+                        return (
+                          <div key={row.id}>
+                            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-md px-1 py-2 text-sm hover:bg-muted/50">
+                              <span className="flex items-center gap-1.5 font-medium">
+                                {row.categoryName}
+                                {row.notes && (
+                                  <Tooltip>
+                                    <TooltipTrigger render={<span />}>
+                                      <Info className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>{row.notes}</TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </span>
+                              <span className="w-24 text-right text-muted-foreground">
+                                {formatCurrency(row.plannedAmount)}
+                              </span>
+                              <span className="w-24 text-right">
+                                {formatCurrency(row.actualAmount)}
+                              </span>
+                              <span
+                                className={cn(
+                                  'w-28 text-right font-medium',
+                                  row.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
+                                )}
+                              >
+                                {formatVariance(row.variance)}
+                              </span>
+                              <span className="flex w-16 items-center justify-end gap-1">
+                                {dto && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => openEdit(dto)}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    setConfirmingDeleteId(row.id);
+                                    setDeleteError(null);
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </span>
+                            </div>
+
+                            {confirmingDeleteId === row.id && (
+                              <div className="mx-1 mb-1 rounded-lg bg-destructive/10 px-3 py-2 text-sm">
+                                <p className="font-medium text-destructive">
+                                  Remove {row.categoryName} from this budget?
+                                </p>
+                                {deleteError && (
+                                  <p className="mt-1 text-xs text-destructive">{deleteError}</p>
+                                )}
+                                <div className="mt-2 flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(row.id)}
+                                    disabled={deleteMutation.isPending}
+                                  >
+                                    {deleteMutation.isPending ? 'Removing…' : 'Remove'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setConfirmingDeleteId(null);
+                                      setDeleteError(null);
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
                             )}
-                          </span>
-                          <span className="w-24 text-right text-muted-foreground">
-                            {formatCurrency(row.plannedAmount)}
-                          </span>
-                          <span className="w-24 text-right">
-                            {formatCurrency(row.actualAmount)}
-                          </span>
-                          <span
-                            className={cn(
-                              'w-28 text-right font-medium',
-                              row.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
-                            )}
-                          >
-                            {formatVariance(row.variance)}
-                          </span>
-                          <span className="w-16" />
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
 
                       <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 border-t px-1 pt-2 text-sm font-semibold">
                         <span>Subtotal</span>
@@ -268,12 +373,8 @@ export function BudgetCategoryBreakdown({
         onOpenChange={setSheetOpen}
         editTarget={editTarget}
         existingCategoryIds={existingCategoryIds}
-        onAdd={() => {
-          // wired in Task 4
-        }}
-        onEdit={() => {
-          // wired in Task 4
-        }}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
         isSubmitting={addMutation.isPending || updateMutation.isPending}
         serverError={catError}
       />
