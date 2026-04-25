@@ -1,6 +1,6 @@
 // src/features/budgets/components/BudgetCategoryBreakdown.tsx
 import { useState } from 'react';
-import { Plus, AlertCircle, RefreshCw, Info, Pencil, Trash2 } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, Info, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CategoryType } from '@/types/api';
 import type {
   BudgetCategoryDto,
@@ -246,26 +252,30 @@ export function BudgetCategoryBreakdown({
                           {formatVariance(row.variance)}
                         </span>
                         <span className="flex w-8 items-center justify-end">
-                          {dto && (
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => openEdit(dto)}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              setConfirmingDeleteId(row.id);
-                              setDeleteError(null);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Category actions</span>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {dto && (
+                                <DropdownMenuItem onClick={() => openEdit(dto)}>
+                                  <Pencil className="mr-2 h-3.5 w-3.5" />
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setConfirmingDeleteId(row.id);
+                                  setDeleteError(null);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </span>
                       </div>
 
