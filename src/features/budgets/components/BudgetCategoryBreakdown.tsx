@@ -3,13 +3,92 @@ import { useState } from 'react';
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { BudgetCategoryDto, BudgetSummaryReportDto } from '@/types/api';
+import { CategoryType } from '@/types/api';
+import type {
+  BudgetCategoryDto,
+  BudgetSummaryReportDto,
+  CategoryActualDto,
+} from '@/types/api';
+import { cn } from '@/lib/utils';
+import { formatCurrency, formatVariance } from '@/lib/formatters';
 import {
   useAddBudgetCategory,
   useUpdateBudgetCategory,
   useDeleteBudgetCategory,
 } from '../hooks/useBudgetCategoryMutations';
 import { BudgetCategoryFormSheet } from './BudgetCategoryFormSheet';
+
+interface MergedRow {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  categoryType: BudgetCategoryDto['categoryType'];
+  notes: string | null | undefined;
+  plannedAmount: number;
+  actualAmount: number;
+  variance: number;
+}
+
+interface GroupTotals {
+  plannedAmount: number;
+  actualAmount: number;
+  variance: number;
+}
+
+const GROUP_ORDER = [
+  CategoryType.Income,
+  CategoryType.Expense,
+  CategoryType.Savings,
+] as const;
+
+const GROUP_LABEL: Record<string, string> = {
+  [CategoryType.Income]: 'Income',
+  [CategoryType.Expense]: 'Expenses',
+  [CategoryType.Savings]: 'Savings',
+};
+
+function mergeRows(
+  categories: BudgetCategoryDto[],
+  report: BudgetSummaryReportDto,
+): MergedRow[] {
+  const actualsById = new Map<string, CategoryActualDto>(
+    report.categoryBreakdown.map((c) => [c.budgetCategoryId, c]),
+  );
+  return categories.map((c) => {
+    const actuals = actualsById.get(c.id);
+    return {
+      id: c.id,
+      categoryId: c.categoryId,
+      categoryName: c.categoryName,
+      categoryType: c.categoryType,
+      notes: c.notes,
+      plannedAmount: c.plannedAmount,
+      actualAmount: actuals?.actualAmount ?? 0,
+      variance: actuals?.variance ?? 0,
+    };
+  });
+}
+
+function groupRows(rows: MergedRow[]): Map<string, MergedRow[]> {
+  const groups = new Map<string, MergedRow[]>();
+  for (const row of rows) {
+    const list = groups.get(row.categoryType) ?? [];
+    list.push(row);
+    groups.set(row.categoryType, list);
+  }
+  return groups;
+}
+
+function sumGroup(rows: MergedRow[]): GroupTotals {
+  return rows.reduce<GroupTotals>(
+    (acc, r) => ({
+      plannedAmount: acc.plannedAmount + r.plannedAmount,
+      actualAmount: acc.actualAmount + r.actualAmount,
+      variance: acc.variance + r.variance,
+    }),
+    { plannedAmount: 0, actualAmount: 0, variance: 0 },
+  );
+}
 
 interface BudgetCategoryBreakdownProps {
   budgetId: string;
@@ -94,12 +173,78 @@ export function BudgetCategoryBreakdown({
             </div>
           )}
 
-          {/* Grouped rows go here in Task 2 */}
-          {!isLoading && !isError && categories.length > 0 && report && (
-            <div className="space-y-4">
-              {/* placeholder until Task 2 */}
-            </div>
-          )}
+          {!isLoading && !isError && categories.length > 0 && report && (() => {
+            const rows = mergeRows(categories, report);
+            const grouped = groupRows(rows);
+            return (
+              <div className="space-y-4">
+                {/* Column header — shared 5-col grid with data rows */}
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 px-1 pb-1 text-xs font-medium text-muted-foreground">
+                  <span>Category</span>
+                  <span className="w-24 text-right">Planned</span>
+                  <span className="w-24 text-right">Actual</span>
+                  <span className="w-28 text-right">Variance</span>
+                  <span className="w-16" />
+                </div>
+
+                {GROUP_ORDER.map((type) => {
+                  const groupRowsForType = grouped.get(type);
+                  if (!groupRowsForType || groupRowsForType.length === 0) return null;
+                  const totals = sumGroup(groupRowsForType);
+                  return (
+                    <div key={type} className="space-y-1">
+                      <div className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {GROUP_LABEL[type]}
+                      </div>
+
+                      {groupRowsForType.map((row) => (
+                        <div
+                          key={row.id}
+                          className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-md px-1 py-2 text-sm hover:bg-muted/50"
+                        >
+                          <span className="font-medium">{row.categoryName}</span>
+                          <span className="w-24 text-right text-muted-foreground">
+                            {formatCurrency(row.plannedAmount)}
+                          </span>
+                          <span className="w-24 text-right">
+                            {formatCurrency(row.actualAmount)}
+                          </span>
+                          <span
+                            className={cn(
+                              'w-28 text-right font-medium',
+                              row.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
+                            )}
+                          >
+                            {formatVariance(row.variance)}
+                          </span>
+                          <span className="w-16" />
+                        </div>
+                      ))}
+
+                      <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 border-t px-1 pt-2 text-sm font-semibold">
+                        <span>Subtotal</span>
+                        <span className="w-24 text-right">
+                          {formatCurrency(totals.plannedAmount)}
+                        </span>
+                        <span className="w-24 text-right">
+                          {formatCurrency(totals.actualAmount)}
+                        </span>
+                        <span
+                          className={cn(
+                            'w-28 text-right',
+                            totals.variance >= 0 ? 'text-emerald-600' : 'text-rose-600',
+                          )}
+                        >
+                          {formatVariance(totals.variance)}
+                        </span>
+                        <span className="w-16" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
