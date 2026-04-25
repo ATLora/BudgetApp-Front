@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { CategoryType } from '@/types/api';
@@ -211,14 +210,12 @@ export function BudgetCategoryBreakdown({
                           <span className="flex items-center gap-1.5 font-medium">
                             {row.categoryName}
                             {row.notes && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger render={<span />}>
-                                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>{row.notes}</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger render={<span />}>
+                                  <Info className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                                </TooltipTrigger>
+                                <TooltipContent>{row.notes}</TooltipContent>
+                              </Tooltip>
                             )}
                           </span>
                           <span className="w-24 text-right text-muted-foreground">
