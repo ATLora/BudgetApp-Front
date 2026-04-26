@@ -46,6 +46,7 @@ export function CategorySelect({
 
   const available = allCategories.filter(
     (c) =>
+      c.isActive &&
       (!filterType || c.categoryType === filterType) &&
       !excludeIds.includes(c.id),
   );
