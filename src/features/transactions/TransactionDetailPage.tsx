@@ -9,6 +9,8 @@ import { useTransactionDetail } from './hooks/useTransactionDetail';
 import { useDeleteTransaction } from './hooks/useTransactionMutations';
 import { TransactionFormDialog } from './components/TransactionFormDialog';
 import type { TransactionFormData } from './components/TransactionFormDialog';
+import { CategoryIcon } from '@/features/categories/icons';
+import { useCategoryLookup } from '@/features/categories/hooks/useCategoryLookup';
 
 const TYPE_LABELS: Record<string, string> = {
   Income: 'Income',
@@ -42,6 +44,11 @@ export function TransactionDetailPage() {
   const detailQuery = useTransactionDetail(id ?? '');
   const deleteMutation = useDeleteTransaction();
   const transaction = detailQuery.data;
+
+  const { lookup: categoryLookup } = useCategoryLookup();
+  const categoryIconName = transaction
+    ? categoryLookup.get(transaction.categoryId)?.icon
+    : undefined;
 
   function handleDelete() {
     if (!id) return;
@@ -116,9 +123,13 @@ export function TransactionDetailPage() {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1 min-w-0">
           <h1 className="truncate text-2xl font-semibold">{transaction.description}</h1>
-          <p className="text-sm text-muted-foreground">
-            {transaction.budgetName} · {transaction.categoryName} ·{' '}
-            {formatDate(transaction.transactionDate, 'MMM d, yyyy')}
+          <p className="flex items-center gap-1 text-sm text-muted-foreground">
+            <span>{transaction.budgetName}</span>
+            <span aria-hidden="true">·</span>
+            <CategoryIcon iconName={categoryIconName} className="size-3.5 shrink-0" />
+            <span>{transaction.categoryName}</span>
+            <span aria-hidden="true">·</span>
+            <span>{formatDate(transaction.transactionDate, 'MMM d, yyyy')}</span>
           </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
@@ -170,7 +181,13 @@ export function TransactionDetailPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Category</p>
-            <p className="mt-0.5 font-medium">{transaction.categoryName}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 font-medium">
+              <CategoryIcon
+                iconName={categoryIconName}
+                className="size-4 text-muted-foreground shrink-0"
+              />
+              {transaction.categoryName}
+            </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Transaction Date</p>
