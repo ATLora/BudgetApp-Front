@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import type { SpendingByCategoryDto } from '@/types/api';
+import { CategoryIcon } from '@/features/categories/icons';
 
 const CHART_PALETTE = [
   'var(--color-chart-1)',
@@ -68,6 +69,10 @@ export function SpendingByCategoryChart({ categories, totalExpenses }: SpendingB
                       style={{
                         backgroundColor: cat.color ?? CHART_PALETTE[index % CHART_PALETTE.length],
                       }}
+                    />
+                    <CategoryIcon
+                      iconName={cat.icon}
+                      className="size-3.5 text-muted-foreground shrink-0"
                     />
                     <span>{cat.categoryName}</span>
                   </div>
