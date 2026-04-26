@@ -1,23 +1,6 @@
 // src/features/categories/components/IconPicker.tsx
-import {
-  Wallet, ShoppingCart, Home, Car,
-  Utensils, Plane, Heart, Dumbbell,
-  GraduationCap, Briefcase, TrendingUp, Gift,
-  Music, Coffee, Baby, Dog,
-  Smartphone, Tv, Fuel, Stethoscope,
-  Bus, Landmark, Shirt, Wrench,
-  type LucideIcon,
-} from 'lucide-react';
+import { CATEGORY_ICONS } from '../icons';
 import { cn } from '@/lib/utils';
-
-export const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  Wallet, ShoppingCart, Home, Car,
-  Utensils, Plane, Heart, Dumbbell,
-  GraduationCap, Briefcase, TrendingUp, Gift,
-  Music, Coffee, Baby, Dog,
-  Smartphone, Tv, Fuel, Stethoscope,
-  Bus, Landmark, Shirt, Wrench,
-};
 
 interface IconPickerProps {
   value: string | null;
