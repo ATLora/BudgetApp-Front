@@ -54,6 +54,8 @@ features/<name>/
 └── types.ts                # Feature-local types (rare — prefer types/api.ts)
 ```
 
+Budget create/edit dialogs are opened from BOTH `BudgetListPage` and `BudgetDetailPage`. Refactors to either dialog must update both call sites.
+
 ### State management — two layers, never mixed
 
 - **Server state** (API data): TanStack Query. Query hooks live in `features/<name>/hooks/`. Global defaults: `staleTime: 5min`, `retry: 1`.
@@ -65,7 +67,7 @@ features/<name>/
 
 ### Auth token storage
 
-Access token: in-memory only (never localStorage). Refresh token + userId: localStorage. The Axios response interceptor in `client.ts` handles silent 401 refresh with request queuing. Do not modify `client.ts` for routine feature work.
+Access token: in-memory only (never localStorage). Refresh token + userId: localStorage under keys `budget_refresh_token` and `budget_user_id`. The Axios response interceptor in `client.ts` handles silent 401 refresh with request queuing. Do not modify `client.ts` for routine feature work.
 
 ## Key Conventions
 
@@ -75,6 +77,7 @@ Access token: in-memory only (never localStorage). Refresh token + userId: local
 - All API types live in `src/types/api.ts` — single source of truth derived from the backend OpenAPI contract (`Docs/BudgetApp.API.json`).
 - All enum values are **string-serialized** (backend uses `JsonStringEnumConverter`): e.g. `"Monthly"`, `"Expense"`, not numeric.
 - Always use `import type` for type-only imports.
+- `categoriesApi.list()` returns inactive categories too — filter by `c.isActive` when building UI lists/pickers.
 
 ### Components & styling
 
@@ -89,10 +92,14 @@ Access token: in-memory only (never localStorage). Refresh token + userId: local
 
 React Hook Form + Zod. Schema first, derive type with `z.infer`. Use `z.coerce.number()` for numeric inputs. Use `zodResolver` from `@hookform/resolvers/zod`. For base-ui Select with react-hook-form, use `Controller` with `value` + `onValueChange` (not `onChange`).
 
+Number inputs that allow sub-1 decimals: keep a local raw-string state and parse on change — driving `value` directly from a parsed number blanks out partial inputs like `0.` and `0.5`.
+
 ### Formatting
 
 Always use helpers from `@/lib/formatters.ts` — never format inline:
 - `formatCurrency(n)`, `formatCompactCurrency(n)`, `formatVariance(n)`, `formatPercent(n)`, `formatDate(str)`, `formatMonthYear(str)`
+
+For date-input strings (`yyyy-MM-dd`), build from `getFullYear/getMonth/getDate`, not `toISOString().split('T')[0]` — the latter UTC-shifts and rolls back a day for users in negative offsets.
 
 ## Reference docs
 
