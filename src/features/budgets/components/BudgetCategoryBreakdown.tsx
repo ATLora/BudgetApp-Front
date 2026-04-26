@@ -29,6 +29,8 @@ import {
   useDeleteBudgetCategory,
 } from '../hooks/useBudgetCategoryMutations';
 import { BudgetCategoryFormSheet } from './BudgetCategoryFormSheet';
+import { CategoryIcon } from '@/features/categories/icons';
+import { useCategoryLookup } from '@/features/categories/hooks/useCategoryLookup';
 
 interface MergedRow {
   id: string;
@@ -102,6 +104,7 @@ export function BudgetCategoryBreakdown({
   const addMutation = useAddBudgetCategory(budgetId);
   const updateMutation = useUpdateBudgetCategory(budgetId);
   const deleteMutation = useDeleteBudgetCategory(budgetId);
+  const { lookup: categoryLookup } = useCategoryLookup();
 
   function openAdd() {
     setEditTarget(undefined);
@@ -227,6 +230,10 @@ export function BudgetCategoryBreakdown({
                         )}
                       >
                         <span className="flex items-center gap-1.5 font-medium">
+                          <CategoryIcon
+                            iconName={categoryLookup.get(dto?.categoryId ?? '')?.icon}
+                            className="size-4 text-muted-foreground shrink-0"
+                          />
                           {row.categoryName}
                           {row.notes && (
                             <Tooltip>
