@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useUpdateBudget } from '../hooks/useBudgetMutations';
 import {
   budgetSchema,
-  BUDGET_FORM_DEFAULTS,
+  getBudgetFormDefaults,
   type BudgetFormData,
 } from './budgetFormSchema';
 import { BudgetBasicsStep } from './BudgetBasicsStep';
@@ -35,7 +35,7 @@ export function BudgetEditDialog({
 
   const form = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
-    defaultValues: { ...BUDGET_FORM_DEFAULTS, ...defaultValues },
+    defaultValues: { ...getBudgetFormDefaults(), ...defaultValues },
   });
 
   const updateMutation = useUpdateBudget();
@@ -43,7 +43,7 @@ export function BudgetEditDialog({
   useEffect(() => {
     if (open) {
       setServerError(null);
-      form.reset({ ...BUDGET_FORM_DEFAULTS, ...defaultValues });
+      form.reset({ ...getBudgetFormDefaults(), ...defaultValues });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, budgetId]);

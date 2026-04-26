@@ -18,7 +18,7 @@ import type { PendingBudgetCategory } from '../types';
 import { useCreateBudgetWithCategories } from '../hooks/useBudgetMutations';
 import {
   budgetSchema,
-  BUDGET_FORM_DEFAULTS,
+  getBudgetFormDefaults,
   type BudgetFormData,
 } from './budgetFormSchema';
 import { BudgetBasicsStep } from './BudgetBasicsStep';
@@ -74,7 +74,7 @@ export function BudgetWizardDialog({
 
   const form = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
-    defaultValues: BUDGET_FORM_DEFAULTS,
+    defaultValues: getBudgetFormDefaults(),
   });
 
   const createMutation = useCreateBudgetWithCategories();
@@ -87,7 +87,7 @@ export function BudgetWizardDialog({
       setCustomCategoriesAdded([]);
       setStepError(null);
       setServerError(null);
-      form.reset(BUDGET_FORM_DEFAULTS);
+      form.reset(getBudgetFormDefaults());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

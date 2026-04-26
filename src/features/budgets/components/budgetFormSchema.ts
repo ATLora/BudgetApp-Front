@@ -34,10 +34,12 @@ function defaultEndDate(): string {
   return toDateInputStr(new Date(d.getFullYear(), d.getMonth() + 1, 0));
 }
 
-export const BUDGET_FORM_DEFAULTS: BudgetFormData = {
-  name: '',
-  budgetType: BudgetType.Monthly,
-  startDate: defaultStartDate(),
-  endDate: defaultEndDate(),
-  isRecurring: true,
-};
+export function getBudgetFormDefaults(): BudgetFormData {
+  return {
+    name: '',
+    budgetType: BudgetType.Monthly,
+    startDate: defaultStartDate(),
+    endDate: defaultEndDate(),
+    isRecurring: true,
+  };
+}

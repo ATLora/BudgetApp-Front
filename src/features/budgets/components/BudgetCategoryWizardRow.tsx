@@ -1,4 +1,5 @@
 // src/features/budgets/components/BudgetCategoryWizardRow.tsx
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 
 export interface BudgetCategoryWizardRowValue {
@@ -14,6 +15,10 @@ interface BudgetCategoryWizardRowProps {
   onChange: (next: BudgetCategoryWizardRowValue) => void;
 }
 
+function amountToInputString(amount: number): string {
+  return amount > 0 ? String(amount) : '';
+}
+
 export function BudgetCategoryWizardRow({
   categoryId,
   categoryName,
@@ -23,8 +28,26 @@ export function BudgetCategoryWizardRow({
   const inputId = `budget-cat-amount-${categoryId}`;
   const hasNote = value.notes.trim().length > 0;
 
-  function setAmount(raw: string) {
+  // Local raw input string so users can type intermediate values like "0", "0.", "0.5"
+  // without the controlled value collapsing them to ''.
+  const [raw, setRaw] = useState(() => amountToInputString(value.plannedAmount));
+
+  // Re-sync from props if the parent resets externally (e.g., dialog reopen).
+  // We intentionally do NOT sync on every prop change — only when the parent's value
+  // would no longer round-trip through our raw string. This preserves user-typed
+  // partial input while still reflecting external resets.
+  useEffect(() => {
     const parsed = parseFloat(raw);
+    const safeParsed = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    if (safeParsed !== value.plannedAmount) {
+      setRaw(amountToInputString(value.plannedAmount));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.plannedAmount]);
+
+  function handleAmountChange(next: string) {
+    setRaw(next);
+    const parsed = parseFloat(next);
     const safe = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
     onChange({ ...value, plannedAmount: safe });
   }
@@ -53,8 +76,8 @@ export function BudgetCategoryWizardRow({
           min="0"
           step="0.01"
           placeholder="0.00"
-          value={value.plannedAmount > 0 ? value.plannedAmount : ''}
-          onChange={(e) => setAmount(e.target.value)}
+          value={raw}
+          onChange={(e) => handleAmountChange(e.target.value)}
           className="w-32 text-right"
         />
       </div>
