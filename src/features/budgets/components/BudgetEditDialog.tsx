@@ -46,7 +46,7 @@ export function BudgetEditDialog({
       form.reset({ ...BUDGET_FORM_DEFAULTS, ...defaultValues });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, defaultValues]);
+  }, [open, budgetId]);
 
   function handleSubmit(data: BudgetFormData) {
     setServerError(null);
