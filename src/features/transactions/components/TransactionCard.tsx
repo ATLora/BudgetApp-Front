@@ -2,6 +2,8 @@
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import type { TransactionDto } from '@/types/api';
+import { CategoryIcon } from '@/features/categories/icons';
+import { useCategoryLookup } from '@/features/categories/hooks/useCategoryLookup';
 
 const CATEGORY_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   Income: { bg: 'bg-emerald-500/15', text: 'text-emerald-600' },
@@ -29,9 +31,14 @@ interface TransactionCardProps {
 
 export function TransactionCard({ transaction }: TransactionCardProps) {
   const navigate = useNavigate();
+  const { lookup: categoryLookup } = useCategoryLookup();
   const colors = CATEGORY_TYPE_COLORS[transaction.categoryType] ?? CATEGORY_TYPE_COLORS['Expense'];
   const amountColor = AMOUNT_COLOR[transaction.transactionType] ?? 'text-foreground';
   const sign = AMOUNT_SIGN[transaction.transactionType] ?? '';
+  const iconName = categoryLookup.get(transaction.categoryId)?.icon;
+  const letterFallback = (
+    <span aria-hidden="true">{transaction.categoryName.charAt(0).toUpperCase()}</span>
+  );
 
   function handleClick() {
     navigate(`/transactions/${transaction.id}`);
@@ -55,7 +62,11 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
         <div
           className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${colors.bg} ${colors.text}`}
         >
-          {transaction.categoryName.charAt(0).toUpperCase()}
+          <CategoryIcon
+            iconName={iconName}
+            className="size-4"
+            fallback={letterFallback}
+          />
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{transaction.description}</p>
