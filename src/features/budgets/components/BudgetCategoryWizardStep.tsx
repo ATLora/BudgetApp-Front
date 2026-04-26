@@ -178,7 +178,7 @@ export function BudgetCategoryWizardStep({
                       onChange={(next) =>
                         onDraftsChange(setRowValue(drafts, c.id, next))
                       }
-/>
+                    />
                   ))}
                 </div>
 
