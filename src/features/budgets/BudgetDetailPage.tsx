@@ -9,20 +9,19 @@ import { formatDate } from '@/lib/formatters';
 import { useBudgetDetail } from './hooks/useBudgetDetail';
 import { useBudgetHealth } from './hooks/useBudgetHealth';
 import { useBudgetReport } from './hooks/useBudgetReport';
-import { useUpdateBudget, useDeleteBudget, useRollForwardBudget } from './hooks/useBudgetMutations';
+import { useDeleteBudget, useRollForwardBudget } from './hooks/useBudgetMutations';
 import { BudgetTypeBadge } from './components/BudgetTypeBadge';
 import { BudgetHealthSection } from './components/BudgetHealthSection';
 import { BudgetCategoryBreakdown } from './components/BudgetCategoryBreakdown';
-import { BudgetFormSheet } from './components/BudgetFormSheet';
-import type { BudgetFormData } from './components/BudgetFormSheet';
+import { BudgetEditDialog } from './components/BudgetEditDialog';
+import type { BudgetFormData } from './components/budgetFormSchema';
 import { DeleteBudgetDialog } from './components/DeleteBudgetDialog';
 
 export function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -30,31 +29,12 @@ export function BudgetDetailPage() {
   const healthQuery = useBudgetHealth(id!);
   const reportQuery = useBudgetReport(id!);
 
-  const updateMutation = useUpdateBudget();
   const deleteMutation = useDeleteBudget();
   const rollForwardMutation = useRollForwardBudget();
 
   const budget = detailQuery.data;
   const periodEnded = budget ? parseISO(budget.endDate) < new Date() : false;
   const canRollForward = !!budget?.isRecurring && periodEnded;
-
-  function handleEditSubmit(data: BudgetFormData) {
-    if (!id) return;
-    setFormError(null);
-    updateMutation.mutate(
-      { id, data },
-      {
-        onSuccess: () => setEditSheetOpen(false),
-        onError: (err) => {
-          setFormError(
-            axios.isAxiosError(err)
-              ? err.response?.data?.detail || err.response?.data?.title || err.message
-              : 'Failed to update budget.',
-          );
-        },
-      },
-    );
-  }
 
   function handleDelete() {
     if (!id) return;
@@ -113,7 +93,7 @@ export function BudgetDetailPage() {
     );
   }
 
-  const editDefaultValues: Partial<BudgetFormData> = {
+  const editDefaults: BudgetFormData = {
     name: budget.name,
     budgetType: budget.budgetType,
     startDate: budget.startDate,
@@ -178,10 +158,7 @@ export function BudgetDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              setFormError(null);
-              setEditSheetOpen(true);
-            }}
+            onClick={() => setEditDialogOpen(true)}
           >
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Edit
@@ -223,16 +200,12 @@ export function BudgetDetailPage() {
         }}
       />
 
-      {/* Edit sheet */}
-      <BudgetFormSheet
-        open={editSheetOpen}
-        onOpenChange={setEditSheetOpen}
-        title="Edit Budget"
-        submitLabel="Save Changes"
-        defaultValues={editDefaultValues}
-        onSubmit={handleEditSubmit}
-        isSubmitting={updateMutation.isPending}
-        serverError={formError}
+      {/* Edit dialog */}
+      <BudgetEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        budgetId={id!}
+        defaultValues={editDefaults}
       />
 
       <DeleteBudgetDialog
