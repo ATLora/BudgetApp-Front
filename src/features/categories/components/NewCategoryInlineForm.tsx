@@ -21,11 +21,17 @@ interface NewCategoryInlineFormProps {
   /** Called with the fully-resolved CategoryDto after the API call succeeds. */
   onCreated: (cat: CategoryDto) => void;
   onCancel: () => void;
+  /** If provided, the type selector is hidden and the new category is forced to this type. */
+  lockedType?: CategoryType;
 }
 
-export function NewCategoryInlineForm({ onCreated, onCancel }: NewCategoryInlineFormProps) {
+export function NewCategoryInlineForm({
+  onCreated,
+  onCancel,
+  lockedType,
+}: NewCategoryInlineFormProps) {
   const [name, setName] = useState('');
-  const [categoryType, setCategoryType] = useState<string>('');
+  const [categoryType, setCategoryType] = useState<string>(lockedType ?? '');
   const [icon, setIcon] = useState<string | null>(null);
   const [color, setColor] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,19 +82,21 @@ export function NewCategoryInlineForm({ onCreated, onCancel }: NewCategoryInline
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-xs">Type</Label>
-        <Select value={categoryType} onValueChange={(val) => { if (val !== null) setCategoryType(val); }}>
-          <SelectTrigger className="w-full" disabled={isSubmitting}>
-            <SelectValue placeholder="Select type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={CategoryType.Income}>Income</SelectItem>
-            <SelectItem value={CategoryType.Expense}>Expense</SelectItem>
-            <SelectItem value={CategoryType.Savings}>Savings</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {!lockedType && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">Type</Label>
+          <Select value={categoryType} onValueChange={(val) => { if (val !== null) setCategoryType(val); }}>
+            <SelectTrigger className="w-full" disabled={isSubmitting}>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CategoryType.Income}>Income</SelectItem>
+              <SelectItem value={CategoryType.Expense}>Expense</SelectItem>
+              <SelectItem value={CategoryType.Savings}>Savings</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <Label className="text-xs">Icon (optional)</Label>
