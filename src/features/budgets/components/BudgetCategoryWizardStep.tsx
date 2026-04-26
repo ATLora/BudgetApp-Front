@@ -53,14 +53,8 @@ const SECTION_TEXT: Record<CategoryType, string> = {
   [CategoryType.Savings]: 'text-sky-600',
 };
 
-const EMPTY_ROW: BudgetCategoryWizardRowValue = {
-  plannedAmount: 0,
-  notes: '',
-  noteOpen: false,
-};
-
 function getRowValue(drafts: DraftMap, categoryId: string): BudgetCategoryWizardRowValue {
-  return drafts.get(categoryId) ?? EMPTY_ROW;
+  return drafts.get(categoryId) ?? { plannedAmount: 0, notes: '', noteOpen: false };
 }
 
 function setRowValue(
