@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { categoriesApi } from '@/services/api/categories';
+import { CategoryIcon } from '@/features/categories/icons';
 import { useBudgetList } from '@/features/budgets/hooks/useBudgetList';
 import { useSavingsGoalList } from '@/features/savings/hooks/useSavingsGoalList';
 import { savingsApi } from '@/services/api/savings';
@@ -339,7 +340,11 @@ export function TransactionFormDialog({
                   <SelectContent>
                     {filteredCategories.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.name}
+                        <CategoryIcon
+                          iconName={c.icon}
+                          className="size-4 text-muted-foreground shrink-0"
+                        />
+                        <span>{c.name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
