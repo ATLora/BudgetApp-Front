@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { categoriesApi } from '@/services/api/categories';
+import { CategoryIcon } from '../icons';
 import type { CategoryDto, CategoryType } from '@/types/api';
 
 interface CategorySelectProps {
@@ -79,7 +80,11 @@ export function CategorySelect({
       <SelectContent>
         {available.map((cat) => (
           <SelectItem key={cat.id} value={cat.id}>
-            {cat.name}
+            <CategoryIcon
+              iconName={cat.icon}
+              className="size-4 text-muted-foreground shrink-0"
+            />
+            <span>{cat.name}</span>
           </SelectItem>
         ))}
         {available.length > 0 && <SelectSeparator />}
