@@ -1,6 +1,7 @@
 // src/features/budgets/components/BudgetCategoryWizardRow.tsx
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { CategoryIcon } from '@/features/categories/icons';
 
 export interface BudgetCategoryWizardRowValue {
   plannedAmount: number;
@@ -11,6 +12,7 @@ export interface BudgetCategoryWizardRowValue {
 interface BudgetCategoryWizardRowProps {
   categoryId: string;
   categoryName: string;
+  iconName: string | null | undefined;
   value: BudgetCategoryWizardRowValue;
   onChange: (next: BudgetCategoryWizardRowValue) => void;
 }
@@ -22,6 +24,7 @@ function amountToInputString(amount: number): string {
 export function BudgetCategoryWizardRow({
   categoryId,
   categoryName,
+  iconName,
   value,
   onChange,
 }: BudgetCategoryWizardRowProps) {
@@ -67,7 +70,11 @@ export function BudgetCategoryWizardRow({
   return (
     <div className="space-y-1.5 py-1.5">
       <div className="flex items-center gap-3">
-        <label htmlFor={inputId} className="flex-1 text-sm">
+        <label htmlFor={inputId} className="flex flex-1 items-center gap-1.5 text-sm">
+          <CategoryIcon
+            iconName={iconName}
+            className="size-4 text-muted-foreground shrink-0"
+          />
           {categoryName}
         </label>
         <Input

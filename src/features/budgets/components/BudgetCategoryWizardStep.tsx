@@ -173,11 +173,12 @@ export function BudgetCategoryWizardStep({
                       key={c.id}
                       categoryId={c.id}
                       categoryName={c.name}
+                      iconName={c.icon}
                       value={getRowValue(drafts, c.id)}
                       onChange={(next) =>
                         onDraftsChange(setRowValue(drafts, c.id, next))
                       }
-                    />
+/>
                   ))}
                 </div>
 
