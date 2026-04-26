@@ -32,6 +32,14 @@ function readStoredCollapsed(): boolean {
   }
 }
 
+function writeStoredCollapsed(v: boolean) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+  } catch {
+    // ignore quota / disabled storage
+  }
+}
+
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsedState] = useState<boolean>(readStoredCollapsed);
   const [isMobileOpen, setMobileOpen] = useState(false);
@@ -39,16 +47,16 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   const setCollapsed = useCallback((v: boolean) => {
     setCollapsedState(v);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
-    } catch {
-      // ignore quota / disabled storage
-    }
+    writeStoredCollapsed(v);
   }, []);
 
   const toggle = useCallback(() => {
-    setCollapsed(!collapsed);
-  }, [collapsed, setCollapsed]);
+    setCollapsedState((prev) => {
+      const next = !prev;
+      writeStoredCollapsed(next);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     function onStorage(e: StorageEvent) {
