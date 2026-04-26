@@ -129,7 +129,8 @@ export function BudgetWizardDialog({
     // Read the cached categories list (the step 2 component populated it
     // via useQuery on the same key). Combine with any custom categories
     // added during this wizard session to build a complete lookup.
-    const cached = queryClient.getQueryData<CategoryDto[]>(['categories', 'list']) ?? [];
+    const cached = (queryClient.getQueryData<CategoryDto[]>(['categories', 'list']) ?? [])
+      .filter((c) => c.isActive);
     const allKnown = [...cached, ...customCategoriesAdded];
     const categoryById = new Map(allKnown.map((c) => [c.id, c]));
 
